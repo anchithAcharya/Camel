@@ -8,7 +8,7 @@ CMD_HISTORY = []
 def main(stdscr):
 	stdscr.clear()
 	stdscr = curses.initscr()
-	curses.curs_set()
+	stdscr.scrollok(True)
 
 	while 1:
 		cmd = myinput(stdscr, prompt = os.getcwd() + ": ",ac_list = os.listdir())
@@ -34,7 +34,7 @@ def main(stdscr):
 	stdscr.refresh()
 	stdscr.getkey()
 
-def myinput(stdscr,y = None,x = None,prompt = "",ac_list = None):
+def myinput(stdscr,y = None,x = None,prompt = "",ac_list = []):
 	b,a = curses.getsyx()
 
 	if x is None: x = a
@@ -49,10 +49,11 @@ def myinput(stdscr,y = None,x = None,prompt = "",ac_list = None):
 	i = h_i = 0
 	res = ""
 	temp_history = [0] + CMD_HISTORY
+	flag = False
 
 	def nav_cmd_stack(upIfTrue):
-		nonlocal inp,i,h_i,x,y,temp_history
-		temp_history[h_i] = res.join(inp)
+		nonlocal inp,i,h_i,temp_history
+		temp_history[h_i] = "".join(inp)
 				
 		stdscr.move(y,x-i)
 		stdscr.clrtoeol()
@@ -65,13 +66,99 @@ def myinput(stdscr,y = None,x = None,prompt = "",ac_list = None):
 		i = len(inp)
 		stdscr.addstr(temp_history[h_i])
 
+	def handle_tab():
+		nonlocal flag,i,inp
+
+		res = "".join(inp)
+		starts_with_res = []
+
+		for line in ac_list:
+			if line.startswith(res):
+				starts_with_res.append(line)
+		
+		if len(starts_with_res) == 0:
+			return
+
+		#direct match
+		if len(starts_with_res) == 1:
+			stdscr.move(y,x-i)
+			stdscr.clrtoeol()
+
+			stdscr.addstr(starts_with_res[0])
+			stdscr.refresh()
+
+			inp.clear()
+			inp = list(starts_with_res[0])
+			i = len(inp)
+			
+			return
+
+		else:
+			temp_list = []
+			idx = len(res)
+
+			while True:
+				ch = starts_with_res[0][idx]
+
+				for line in starts_with_res:
+					if line[idx] == ch:
+						temp_list.append(line)
+					
+					#match for multiple values
+					else:
+						if flag:
+							if len(starts_with_res) > 5:
+								stdscr.addstr(y+2,0,"Show all  "+ str(len(starts_with_res)) + " possibilities?  [y/n]: ")
+							while True:
+								if len(starts_with_res) > 5:
+									key = chr(stdscr.getch())
+								else: key = 'y'
+									
+								stdscr.addch('\n')
+
+								if key == 'y':
+									for p in starts_with_res:
+										stdscr.addstr(p + "\n")
+									
+									stdscr.addstr("\n" + prompt + res)
+									stdscr.refresh()
+									break
+
+								elif key == 'n':
+									stdscr.move(y+2,0)
+									stdscr.clrtoeol()
+
+									stdscr.move(y,x)
+									stdscr.refresh()
+									break
+						
+						flag = not flag
+						return
+
+				idx += 1
+
+				#partial match
+				if starts_with_res != temp_list:
+					stdscr.move(y,x-i)
+					stdscr.clrtoeol()
+
+					stdscr.addstr(starts_with_res[0][:idx+1])
+					stdscr.refresh()
+
+					inp.clear()
+					inp = list(starts_with_res[0][:idx+1])
+					i = len(inp)
+					
+					return
+
 	while 1:
 		c = stdscr.getch()
 		y,x = curses.getsyx()
 
 		#Tab key
 		if c == 9:
-			pass
+			handle_tab()
+			continue
 
 		elif c == curses.KEY_UP:
 			if h_i < len(temp_history)-1:
