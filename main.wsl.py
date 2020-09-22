@@ -7,11 +7,21 @@ CMD_HISTORY = []
 
 def main(stdscr):
 	stdscr.clear()
-	stdscr = curses.initscr()
-	stdscr.scrollok(True)
+	curses.echo()
+	
+	y_max,x_max = stdscr.getmaxyx()
+	border = (y_max-3,x_max-2, 1,1)
+
+	screen = curses.newwin(*border)
+	y_max,x_max = screen.getmaxyx()
+	screen.box()
+
+	screen.refresh()
+	pad = curses.newpad(y_max*2, x_max+10)
+	pad.refresh(0,0, 2,2, y_max-2,x_max-2)
 
 	while 1:
-		cmd = myinput(stdscr, prompt = os.getcwd() + ": ",ac_list = os.listdir())
+		cmd = myinput(pad, max_YX = (y_max-2,x_max-2), prompt = os.getcwd() + ": ",ac_list = os.listdir())
 
 		if cmd == "ls":
 			print(*os.listdir(), sep = '\n',end = "\n\n")
@@ -27,24 +37,22 @@ def main(stdscr):
 			pass
 
 		else:
-			stdscr.addstr("Invalid command: " + cmd + "\n")
-			stdscr.refresh()
+			screen.addstr("Invalid command: " + cmd + "\n")
+			screen.refresh()
 	
 
-	stdscr.refresh()
-	stdscr.getkey()
+	pad.refresh()
+	pad.getkey()
 
-def myinput(stdscr,y = None,x = None,prompt = "",ac_list = []):
-	b,a = curses.getsyx()
+def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
+	win.keypad(1)
 
+	b,a = win.getyx()
 	if x is None: x = a
 	if y is None: y = b
 
-	stdscr.addstr(y,x,prompt)
+	win.addstr(y,x,prompt)
 
-	stdscr.keypad(1)
-
-	c = None
 	inp = []
 	i = h_i = 0
 	res = ""
@@ -55,16 +63,16 @@ def myinput(stdscr,y = None,x = None,prompt = "",ac_list = []):
 		nonlocal inp,i,h_i,temp_history
 		temp_history[h_i] = "".join(inp)
 				
-		stdscr.move(y,x-i)
-		stdscr.clrtoeol()
-		stdscr.refresh()
+		win.move(y,x-i)
+		win.clrtoeol()
+		win.refresh(0,0, 2,2, *max_YX)
 		
 		if upIfTrue: h_i += 1
 		else: h_i -= 1
 
 		inp = list(temp_history[h_i])
 		i = len(inp)
-		stdscr.addstr(temp_history[h_i])
+		win.addstr(temp_history[h_i])
 
 	def handle_tab():
 		nonlocal flag,i,inp
@@ -77,15 +85,16 @@ def myinput(stdscr,y = None,x = None,prompt = "",ac_list = []):
 				starts_with_res.append(line)
 		
 		if len(starts_with_res) == 0:
+			curses.beep()
 			return
 
 		#direct match
 		if len(starts_with_res) == 1:
-			stdscr.move(y,x-i)
-			stdscr.clrtoeol()
+			win.move(y,x-i)
+			win.clrtoeol()
 
-			stdscr.addstr(starts_with_res[0])
-			stdscr.refresh()
+			win.addstr(starts_with_res[0])
+			win.refresh(0,0, 2,2, *max_YX)
 
 			inp.clear()
 			inp = list(starts_with_res[0])
@@ -108,28 +117,29 @@ def myinput(stdscr,y = None,x = None,prompt = "",ac_list = []):
 					else:
 						if flag:
 							if len(starts_with_res) > 5:
-								stdscr.addstr(y+2,0,"Show all  "+ str(len(starts_with_res)) + " possibilities?  [y/n]: ")
+								win.addstr(y+2,0,"Show all  "+ str(len(starts_with_res)) + " possibilities?  [y/n]: ")
+								win.refresh(0,0, 2,2, *max_YX)
 							while True:
 								if len(starts_with_res) > 5:
-									key = chr(stdscr.getch())
+									key = chr(win.getch())
 								else: key = 'y'
 									
-								stdscr.addch('\n')
+								win.addch('\n')
 
 								if key == 'y':
 									for p in starts_with_res:
-										stdscr.addstr(p + "\n")
+										win.addstr(p + "\n")
 									
-									stdscr.addstr("\n" + prompt + res)
-									stdscr.refresh()
+									win.addstr("\n" + prompt + res)
+									win.refresh(0,0, 2,2, *max_YX)
 									break
 
 								elif key == 'n':
-									stdscr.move(y+2,0)
-									stdscr.clrtoeol()
+									win.move(y+2,0)
+									win.clrtoeol()
 
-									stdscr.move(y,x)
-									stdscr.refresh()
+									win.move(y,x)
+									win.refresh(0,0, 2,2, *max_YX)
 									break
 						
 						flag = not flag
@@ -139,11 +149,11 @@ def myinput(stdscr,y = None,x = None,prompt = "",ac_list = []):
 
 				#partial match
 				if starts_with_res != temp_list:
-					stdscr.move(y,x-i)
-					stdscr.clrtoeol()
+					win.move(y,x-i)
+					win.clrtoeol()
 
-					stdscr.addstr(starts_with_res[0][:idx+1])
-					stdscr.refresh()
+					win.addstr(starts_with_res[0][:idx+1])
+					win.refresh(0,0, 2,2, *max_YX)
 
 					inp.clear()
 					inp = list(starts_with_res[0][:idx+1])
@@ -152,13 +162,13 @@ def myinput(stdscr,y = None,x = None,prompt = "",ac_list = []):
 					return
 
 	while 1:
-		c = stdscr.getch()
-		y,x = curses.getsyx()
+		win.refresh(0,0, 2,2, *max_YX)
+		c = win.getch()
+		y,x = win.getyx()
 
 		#Tab key
 		if c == 9:
 			handle_tab()
-			continue
 
 		elif c == curses.KEY_UP:
 			if h_i < len(temp_history)-1:
@@ -171,54 +181,54 @@ def myinput(stdscr,y = None,x = None,prompt = "",ac_list = []):
 		elif c == curses.KEY_LEFT:
 			if i > 0:
 				i -= 1
-				stdscr.move(y,x-1)
+				win.move(y,x-1)
 
 		elif c == curses.KEY_RIGHT:
 			if i < len(inp):
 				i += 1
-				stdscr.move(y,x+1)
+				win.move(y,x+1)
 
 		# DEL key
 		elif c == curses.KEY_DC:
 			if i < len(inp):
 				inp.pop(i)
-				stdscr.delch(y,x)
+				win.delch(y,x)
 
 		elif c == curses.KEY_BACKSPACE:
 			if i > 0:
 				inp.pop(i-1)
 				i -= 1
 
-				stdscr.delch(y,x-1)
-				stdscr.move(y,x-1)
+				win.delch(y,x-1)
+				win.move(y,x-1)
 		
 		elif c == curses.KEY_HOME:
-			stdscr.move(y,x-i)
+			win.move(y,x-i)
 			i = 0
 		
 		elif c == curses.KEY_END:
-			stdscr.move(y,(x + len(inp) - i))
+			win.move(y,(x + len(inp) - i))
 			i = len(inp)
 		
 		# Enter key
 		elif c == 10:
-			stdscr.move(y+1,0)
-			stdscr.refresh()
+			win.move(y+1,0)
+			win.refresh(0,0, 2,2, *max_YX)
 			break
 
 		elif chr(c).isprintable():
 			if i < len(inp):
-				stdscr.insch(c)
-				stdscr.move(y,x+1)
+				win.insch(c)
+				win.move(y,x+1)
 			else:
-				stdscr.addch(c)
+				win.addch(c)
 			inp.insert(i,chr(c))
 
 			i += 1
 	
-	stdscr.keypad(0)
+	win.keypad(0)
 
-	res = res.join(inp)
+	res = "".join(inp)
 
 	if res != "":
 		CMD_HISTORY.insert(0,res)
@@ -227,3 +237,4 @@ def myinput(stdscr,y = None,x = None,prompt = "",ac_list = []):
 	return res
 
 wrapper(main)
+curses.endwin()
