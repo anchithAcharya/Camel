@@ -4,6 +4,7 @@ from curses import wrapper
 
 HISTORY_LIMIT = 20
 CMD_HISTORY = []
+scroll_pos = 0
 
 def main(stdscr):
 	stdscr.clear()
@@ -15,13 +16,13 @@ def main(stdscr):
 	screen = curses.newwin(*border)
 	y_max,x_max = screen.getmaxyx()
 	screen.box()
-
 	screen.refresh()
-	pad = curses.newpad(y_max*2, x_max+10)
-	pad.refresh(0,0, 2,2, y_max-2,x_max-2)
+
+	pad = curses.newpad(y_max*3, x_max+10)
+	pad.refresh(0,0, 2,2, y_max-1,x_max-1)
 
 	while 1:
-		cmd = myinput(pad, max_YX = (y_max-2,x_max-2), prompt = os.getcwd() + ": ",ac_list = os.listdir())
+		cmd = myinput(pad, max_YX = (y_max-1,x_max-1), prompt = os.getcwd() + ": ", ac_list = os.listdir())
 
 		if cmd == "ls":
 			print(*os.listdir(), sep = '\n',end = "\n\n")
@@ -45,6 +46,7 @@ def main(stdscr):
 	pad.getkey()
 
 def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
+	global scroll_pos
 	win.keypad(1)
 
 	b,a = win.getyx()
@@ -59,13 +61,21 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 	temp_history = [0] + CMD_HISTORY
 	flag = False
 
+	def pad_refresh(no_scroll = True):
+		global scroll_pos
+		win.refresh(scroll_pos,0, 2,2, *max_YX)
+
+		while not no_scroll and (curses.getsyx()[0] >= max_YX[0]-1):
+			scroll_pos += 1
+			win.refresh(scroll_pos,0, 2,2, *max_YX)
+
 	def nav_cmd_stack(upIfTrue):
 		nonlocal inp,i,h_i,temp_history
 		temp_history[h_i] = "".join(inp)
 				
 		win.move(y,x-i)
 		win.clrtoeol()
-		win.refresh(0,0, 2,2, *max_YX)
+		pad_refresh()
 		
 		if upIfTrue: h_i += 1
 		else: h_i -= 1
@@ -88,13 +98,13 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 			curses.beep()
 			return
 
-		#direct match
+		# direct match
 		if len(starts_with_res) == 1:
 			win.move(y,x-i)
 			win.clrtoeol()
 
 			win.addstr(starts_with_res[0])
-			win.refresh(0,0, 2,2, *max_YX)
+			pad_refresh()
 
 			inp.clear()
 			inp = list(starts_with_res[0])
@@ -113,12 +123,12 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 					if line[idx] == ch:
 						temp_list.append(line)
 					
-					#match for multiple values
+					# match for multiple values
 					else:
 						if flag:
 							if len(starts_with_res) > 5:
-								win.addstr(y+2,0,"Show all  "+ str(len(starts_with_res)) + " possibilities?  [y/n]: ")
-								win.refresh(0,0, 2,2, *max_YX)
+								win.addstr(y+2,0,"Show all  " + str(len(starts_with_res)) + " possibilities?  [y/n]: ")
+								pad_refresh(no_scroll=False)
 							while True:
 								if len(starts_with_res) > 5:
 									key = chr(win.getch())
@@ -129,9 +139,10 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 								if key == 'y':
 									for p in starts_with_res:
 										win.addstr(p + "\n")
+										pad_refresh(no_scroll=False)
 									
 									win.addstr("\n" + prompt + res)
-									win.refresh(0,0, 2,2, *max_YX)
+									pad_refresh()
 									break
 
 								elif key == 'n':
@@ -139,7 +150,7 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 									win.clrtoeol()
 
 									win.move(y,x)
-									win.refresh(0,0, 2,2, *max_YX)
+									pad_refresh()
 									break
 						
 						flag = not flag
@@ -147,13 +158,13 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 
 				idx += 1
 
-				#partial match
+				# partial match
 				if starts_with_res != temp_list:
 					win.move(y,x-i)
 					win.clrtoeol()
 
 					win.addstr(starts_with_res[0][:idx+1])
-					win.refresh(0,0, 2,2, *max_YX)
+					pad_refresh()
 
 					inp.clear()
 					inp = list(starts_with_res[0][:idx+1])
@@ -162,7 +173,7 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 					return
 
 	while 1:
-		win.refresh(0,0, 2,2, *max_YX)
+		pad_refresh()
 		c = win.getch()
 		y,x = win.getyx()
 
@@ -210,10 +221,18 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 			win.move(y,(x + len(inp) - i))
 			i = len(inp)
 		
+		elif c == curses.KEY_NPAGE:
+			if scroll_pos < (win.getmaxyx()[0] - (max_YX[0] - 2)):
+				scroll_pos += 1
+
+		elif c == curses.KEY_PPAGE:
+			if scroll_pos > 0:
+				scroll_pos -= 1
+
 		# Enter key
 		elif c == 10:
-			win.move(y+1,0)
-			win.refresh(0,0, 2,2, *max_YX)
+			win.move(y+1,0)	
+			pad_refresh()
 			break
 
 		elif chr(c).isprintable():
