@@ -18,11 +18,14 @@ def main(stdscr):
 	screen.box()
 	screen.refresh()
 
+	scrollwin = curses.newwin(y_max-2,1,2,x_max-1)
+	scrollwin.leaveok(1)
+
 	pad = curses.newpad(y_max*3, x_max+10)
-	pad.refresh(0,0, 2,2, y_max-1,x_max-1)
+	pad.refresh(0,0, 2,2, y_max-1,x_max-2)
 
 	while 1:
-		cmd = myinput(pad, max_YX = (y_max-1,x_max-1), prompt = os.getcwd() + ": ", ac_list = os.listdir())
+		cmd = myinput(pad, max_YX = (y_max-1,x_max-2), scrollwin = scrollwin, prompt = os.getcwd() + ": ", ac_list = os.listdir())
 
 		if cmd == "ls":
 			print(*os.listdir(), sep = '\n',end = "\n\n")
@@ -45,7 +48,7 @@ def main(stdscr):
 	pad.refresh()
 	pad.getkey()
 
-def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
+def myinput(win, y = None,x = None, max_YX = None, scrollwin = None, prompt = "",ac_list = []):
 	global scroll_pos
 	win.keypad(1)
 
@@ -70,6 +73,14 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 
 	def pad_refresh(no_scroll = True):
 		global scroll_pos
+
+		p = round((scroll_pos/(win.getmaxyx()[0] - (max_YX[0] - 2))) * scrollwin.getmaxyx()[0])
+		while p > scrollwin.getmaxyx()[0]-1: p -= 1
+
+		scrollwin.clear()
+		scrollwin.insstr(p,0,'█')
+		scrollwin.refresh()
+
 		win.refresh(scroll_pos,0, 2,2, *max_YX)
 
 		while not no_scroll and (curses.getsyx()[0] >= max_YX[0]-1):
@@ -239,7 +250,7 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 		# Enter key
 		elif c == 10:
 			win.move(y+1,0)	
-			pad_refresh()
+			pad_refresh(no_scroll=False)
 			break
 
 		elif chr(c).isprintable():
