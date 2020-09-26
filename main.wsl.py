@@ -71,7 +71,7 @@ def myinput(win, y = None,x = None, max_YX = None, scrollwin = None, prompt = ""
 		while p > scrollwin.getmaxyx()[0]-1: p -= 1
 
 		scrollwin.clear()
-		scrollwin.insch(p,0,'|')
+		scrollwin.insstr(p,0,'█')
 		scrollwin.refresh()
 
 		win.refresh(scroll_pos,0, 2,2, *max_YX)
