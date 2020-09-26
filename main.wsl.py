@@ -49,11 +49,18 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 	global scroll_pos
 	win.keypad(1)
 
-	b,a = win.getyx()
-	if x is None: x = a
-	if y is None: y = b
+	def safe_print(y=None,x=None,str=str):
+		b,a = win.getyx()
+		if x is None: x = a
+		if y is None: y = b
 
-	win.addstr(y,x,prompt)
+		q,p = win.getmaxyx()
+		if b >= q - 5:
+			win.resize(q+max_YX[0],p)
+
+		win.addstr(y,x,str)
+
+	safe_print(y,x,prompt)
 
 	inp = []
 	i = h_i = 0
@@ -82,7 +89,7 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 
 		inp = list(temp_history[h_i])
 		i = len(inp)
-		win.addstr(temp_history[h_i])
+		safe_print(str=temp_history[h_i])
 
 	def handle_tab():
 		nonlocal flag,i,inp
@@ -103,7 +110,7 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 			win.move(y,x-i)
 			win.clrtoeol()
 
-			win.addstr(starts_with_res[0])
+			safe_print(str=starts_with_res[0])
 			pad_refresh()
 
 			inp.clear()
@@ -127,7 +134,7 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 					else:
 						if flag:
 							if len(starts_with_res) > 5:
-								win.addstr(y+2,0,"Show all  " + str(len(starts_with_res)) + " possibilities?  [y/n]: ")
+								safe_print(y+2,0,"Show all  " + str(len(starts_with_res)) + " possibilities?  [y/n]: ")
 								pad_refresh(no_scroll=False)
 							while True:
 								if len(starts_with_res) > 5:
@@ -138,10 +145,10 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 
 								if key == 'y':
 									for p in starts_with_res:
-										win.addstr(p + "\n")
+										safe_print(str = p + "\n")
 										pad_refresh(no_scroll=False)
 									
-									win.addstr("\n" + prompt + res)
+									safe_print(str="\n" + prompt + res)
 									pad_refresh()
 									break
 
@@ -163,7 +170,7 @@ def myinput(win, y = None,x = None, max_YX = None, prompt = "",ac_list = []):
 					win.move(y,x-i)
 					win.clrtoeol()
 
-					win.addstr(starts_with_res[0][:idx+1])
+					safe_print(str=starts_with_res[0][:idx+1])
 					pad_refresh()
 
 					inp.clear()
