@@ -1,33 +1,33 @@
 import curses
-from pad_funcs_wsl import pad_refresh
+import pad_funcs_wsl as pf
 
-MAX = 10
+MAX = 15
 SELECTED_ITEM = 0
 HSCROLL_INDEX = 0
-HSCROLL_DELAY = 0
-BLINK_DELAY = 0
+_HSCROLL_DELAY = 0
 
 def print_list(win,scrollwin, max_YX, prnt_list):
-	global HSCROLL_INDEX,HSCROLL_DELAY,BLINK_DELAY
-
+	global HSCROLL_INDEX,_HSCROLL_DELAY
+	
 	flag = False
 	win.erase()
+	pf.MAX_USED_SPACE = len(prnt_list)
 
 	for i,line in enumerate(prnt_list):
 		if len(line) > MAX:
 			if i == SELECTED_ITEM:
 				if HSCROLL_INDEX == 0:
-					HSCROLL_DELAY += 1
+					_HSCROLL_DELAY += 1
 
-					if HSCROLL_DELAY > 3:
-						HSCROLL_DELAY = 0
+					if _HSCROLL_DELAY > 3:
+						_HSCROLL_DELAY = 0
 						HSCROLL_INDEX += 1
 
-				elif HSCROLL_INDEX > len(line) - MAX + 1:
-					HSCROLL_DELAY += 1
+				elif HSCROLL_INDEX > len(line) - (MAX + 1):
+					_HSCROLL_DELAY += 1
 
-					if HSCROLL_DELAY > 3:
-						HSCROLL_DELAY = HSCROLL_INDEX = 0
+					if _HSCROLL_DELAY > 3:
+						_HSCROLL_DELAY = HSCROLL_INDEX = 0
 				
 				else: HSCROLL_INDEX += 1
 
@@ -40,18 +40,17 @@ def print_list(win,scrollwin, max_YX, prnt_list):
 		if i == SELECTED_ITEM:
 			win.attron(curses.A_REVERSE)
 			
-		win.addstr(line)
+		pf.safe_print(win,line)
 		win.attroff(curses.A_REVERSE)
 
-		if flag and BLINK_DELAY == 0:
-			win.addstr('...')
+		if flag:
+			win.attron(curses.color_pair(101))
+			pf.safe_print(win,'...')
+			win.attroff(curses.color_pair(101))
 
 			flag = False
 
-		win.addch('\n')
-		
-	BLINK_DELAY += 1
-	BLINK_DELAY %= 3
+		pf.safe_print(win,'\n')
 
-	win.addch('\n')
-	pad_refresh(win,scrollwin, max_YX)
+	pf.safe_print(win,'\n')
+	pf.pad_refresh(win,scrollwin, max_YX)
