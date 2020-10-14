@@ -23,7 +23,7 @@ def print_list(win,scrollwin, max_YX, prnt_list):
 						_HSCROLL_DELAY = 0
 						HSCROLL_INDEX += 1
 
-				elif HSCROLL_INDEX > len(line) - (MAX + 1):
+				elif HSCROLL_INDEX > len(line) - (MAX - 1):
 					_HSCROLL_DELAY += 1
 
 					if _HSCROLL_DELAY > 3:
