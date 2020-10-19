@@ -35,23 +35,25 @@ def main(stdscr):
 
 	pf.PAD_YMAX = y_max - 2
 	pf.PAD_XMAX = x_max - 5
+	pl.LIST_WIDTH = int(pf.PAD_XMAX / (pl.MAX + len(pl.SEP)))
 
 	pad.keypad(1)
 	pad.nodelay(1)
 	pad.timeout(300)
 
 	max_YX = (y_max-1,x_max-2)
-	my_list = ['..'] + os.listdir()
+	my_list = [[settings.ROOT]]
+	curses.ungetch(10)
 
 	def set_scroll():
-		if pl.SELECTED_ITEM not in range(pf.SCROLL_POS,pf.SCROLL_POS + pf.PAD_YMAX):
-			if pl.SELECTED_ITEM < pf.PAD_YMAX:
+		if pl.SELECTED_ITEM[0] not in range(pf.SCROLL_POS,pf.SCROLL_POS + pf.PAD_YMAX):
+			if pl.SELECTED_ITEM[0] < pf.PAD_YMAX:
 				pf.SCROLL_POS = 0
 			
-			elif pl.SELECTED_ITEM >= (len(my_list) - pf.PAD_YMAX):
+			elif pl.SELECTED_ITEM[0] >= (len(my_list) - pf.PAD_YMAX):
 				pf.SCROLL_POS = (len(my_list) - pf.PAD_YMAX)
 			
-			else: pf.SCROLL_POS = pl.SELECTED_ITEM
+			else: pf.SCROLL_POS = pl.SELECTED_ITEM[0]
 
 	while(1):
 		pad.erase()
@@ -60,33 +62,44 @@ def main(stdscr):
 		ch = pad.getch()
 
 		if ch == curses.KEY_UP:
-			if pl.SELECTED_ITEM > 0:
-				pl.SELECTED_ITEM -= 1
+			if pl.SELECTED_ITEM[0] > 0:
+				pl.SELECTED_ITEM[0] -= 1
 
-			if pl.SELECTED_ITEM < pf.SCROLL_POS and pf.SCROLL_POS > 0:
+			if pl.SELECTED_ITEM[0] < pf.SCROLL_POS and pf.SCROLL_POS > 0:
 					pf.SCROLL_POS -= 1
 
 			set_scroll()
 			pl.HSCROLL_DELAY = pl.HSCROLL_INDEX = 0
 
 		elif ch == curses.KEY_DOWN:
-			if pl.SELECTED_ITEM < len(my_list) - 1:
-				pl.SELECTED_ITEM += 1
-
-				if pl.SELECTED_ITEM > (pf.SCROLL_POS + pf.PAD_YMAX) - 1:
+			if pl.SELECTED_ITEM[0] < len(my_list) - 1:
+				try:
+					my_list[pl.SELECTED_ITEM[0]+1][pl.SELECTED_ITEM[1]]
+					pl.SELECTED_ITEM[0] += 1
+				except IndexError: pass
+			
+				if pl.SELECTED_ITEM[0] > (pf.SCROLL_POS + pf.PAD_YMAX) - 1:
 					pf.SCROLL_POS += 1
 
 			set_scroll()
 			pl.HSCROLL_DELAY = pl.HSCROLL_INDEX = 0
 		
+		elif ch == curses.KEY_LEFT:
+			if pl.SELECTED_ITEM[1] > 0:
+				pl.SELECTED_ITEM[1] -= 1
+
+		elif ch == curses.KEY_RIGHT:
+			if pl.SELECTED_ITEM[1] < len(my_list[pl.SELECTED_ITEM[0]]) - 1:
+				pl.SELECTED_ITEM[1] += 1
+
 		elif ch == curses.KEY_HOME:
-			pl.SELECTED_ITEM = 0
+			pl.SELECTED_ITEM = [0,0]
 			pf.SCROLL_POS = 0
 
 			pl.HSCROLL_DELAY = pl.HSCROLL_INDEX = 0
 
 		elif ch == curses.KEY_END:
-			pl.SELECTED_ITEM = len(my_list) - 1
+			pl.SELECTED_ITEM = [len(my_list)-1,len(my_list[-1])-1]
 			pf.SCROLL_POS = pf.MAX_USED_SPACE - pf.PAD_YMAX
 
 			if pf.SCROLL_POS < 0:
@@ -96,8 +109,8 @@ def main(stdscr):
 
 		#detect ALT + KEY_UP
 		elif ch == 564:
-			if my_list[0] == '..':
-				pl.SELECTED_ITEM = 0
+			if my_list[0][0] == '..':
+				pl.SELECTED_ITEM = [0,0]
 				curses.ungetch(10)
 		
 		# detect CTRL + PAGE UP
@@ -128,7 +141,7 @@ def main(stdscr):
 			pf.SCROLL_POS = temp
 
 		elif ch == 10:
-			path = my_list[pl.SELECTED_ITEM]
+			path = my_list[pl.SELECTED_ITEM[0]][pl.SELECTED_ITEM[1]]
 			if os.path.isdir(path):
 				this_dir = None
 
@@ -140,12 +153,19 @@ def main(stdscr):
 				my_list = os.listdir()
 				if os.getcwd() != '/':
 					my_list.insert(0, '..')
+					
+				my_list = pl.convert_to_2d(my_list,pl.LIST_WIDTH)
 
-				if settings.SELECT_PREV_DIR_ON_CD_UP:
-					try: pl.SELECTED_ITEM = my_list.index(this_dir)
-					except ValueError: pl.SELECTED_ITEM = 0
+				if path == '..' and settings.SELECT_PREV_DIR_ON_CD_UP:
+					try:
+						for x in my_list:
+							if this_dir in x:
+								pl.SELECTED_ITEM = [my_list.index(x), x.index(this_dir)]
+								break
+
+					except ValueError: pl.SELECTED_ITEM = [0,0]
 				
-				else: pl.SELECTED_ITEM = 0
+				else: pl.SELECTED_ITEM = [0,0]
 
 				set_scroll()
 

@@ -1,1 +1,2 @@
 SELECT_PREV_DIR_ON_CD_UP = False
+ROOT = '.'

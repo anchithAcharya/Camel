@@ -11,7 +11,7 @@ def pad_refresh(pad,scrollwin,max_YX,auto_scroll = False):
 	p = round((SCROLL_POS/(MAX_USED_SPACE - PAD_YMAX)) * PAD_YMAX)
 	while p > scrollwin.getmaxyx()[0]-1: p -= 1
 
-	scrollwin.clear()
+	scrollwin.erase()
 	scrollwin.insstr(p,0,'█')
 	scrollwin.refresh()
 
