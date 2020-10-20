@@ -1,11 +1,14 @@
 import os
 import curses
 import pad_funcs_wsl as pf
+import colors_wsl as colors
 import print_list_wsl as pl
 import settings_wsl as settings
 
 def main(stdscr):
 	curses.start_color()
+	colors.initialize_colors()
+
 	stdscr.clear()
 
 	curses.echo()
@@ -16,13 +19,10 @@ def main(stdscr):
 
 	screen = curses.newwin(*border)
 	y_max,x_max = screen.getmaxyx()
-
-	curses.init_pair(100,curses.COLOR_RED,curses.COLOR_BLACK)
-	curses.init_pair(101,9,curses.COLOR_BLACK) #TODO: add color pairs to colors_wsl.py
 	
-	screen.attron(curses.color_pair(100))
+	screen.attron(curses.color_pair(colors.COLORPAIR_RED_BLACK))
 	screen.box()
-	screen.attroff(curses.color_pair(100))
+	screen.attroff(curses.color_pair(colors.COLORPAIR_RED_BLACK))
 
 	screen.addstr(0,5," CML ")
 	screen.refresh()

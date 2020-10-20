@@ -1,6 +1,7 @@
 import math
 import curses
 import pad_funcs_wsl as pf
+import colors_wsl as colors
 
 MAX = 15
 SELECTED_ITEM = [0,0]
@@ -73,9 +74,9 @@ def print_list(win,scrollwin, max_YX, prnt_list):
 		win.attroff(curses.A_REVERSE)
 
 		if print_ellipsis:
-			win.attron(curses.color_pair(101))
+			win.attron(curses.color_pair(colors.COLORPAIR_LRED_BLACK))
 			pf.safe_print(win,'...')
-			win.attroff(curses.color_pair(101))
+			win.attroff(curses.color_pair(colors.COLORPAIR_LRED_BLACK))
 
 			print_ellipsis = False
 
