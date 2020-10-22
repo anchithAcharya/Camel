@@ -1,31 +1,56 @@
 import os
 import curses
 import pad_funcs_wsl as pf
-import colors_wsl as colors
 import print_list_wsl as pl
 import settings_wsl as settings
+from colors_wsl import COLOR_DICT, init_colors
 
-def main(stdscr):
+def main(stdscr):		# TODO: Handle terminal resize events
 	curses.start_color()
-	colors.initialize_colors()
-
-	stdscr.clear()
+	init_colors()
 
 	curses.echo()
 	curses.curs_set(0)
+
 	
 	y_max,x_max = stdscr.getmaxyx()
-	border = (y_max-3,x_max-2, 1,1)
+	stdscr.clear()
 
-	screen = curses.newwin(*border)
-	y_max,x_max = screen.getmaxyx()
+	def print_statusbar(keys, extra=None):
+		last_line = stdscr.getmaxyx()[0]
+		elements = {key: settings.KEYBINDS[key] for key in keys}
+		elements.update((extra or {}))
+
+		stdscr.attron(COLOR_DICT['RED_BLACK'])
 	
-	screen.attron(curses.color_pair(colors.COLORPAIR_RED_BLACK))
+		stdscr.addstr(last_line-1,0, '█' * (x_max-1))
+		stdscr.insstr('█')
+
+		stdscr.move(last_line-1,2)
+
+		for key in elements:
+			stdscr.addstr(key)
+
+			stdscr.attron(curses.A_REVERSE)
+			stdscr.addstr(' ' + elements[key] + '  ')
+			stdscr.attroff(curses.A_REVERSE)
+
+		stdscr.attroff(COLOR_DICT['RED_BLACK'])
+
+		stdscr.refresh()
+
+	print_statusbar(('F1','F10'))
+	screen = curses.newwin(y_max-3,x_max-2, 1,1)
+	y_max,x_max = screen.getmaxyx()
+
+	
+	screen.attron(COLOR_DICT["RED_BLACK"])
 	screen.box()
-	screen.attroff(curses.color_pair(colors.COLORPAIR_RED_BLACK))
+	screen.attroff(COLOR_DICT["RED_BLACK"])
 
 	screen.addstr(0,5," CML ")
 	screen.refresh()
+
 
 	scrollwin = curses.newwin(y_max-2,1,2,x_max-1)
 	scrollwin.leaveok(1)
@@ -54,6 +79,61 @@ def main(stdscr):
 				pf.SCROLL_POS = (len(my_list) - pf.PAD_YMAX)
 			
 			else: pf.SCROLL_POS = pl.SELECTED_ITEM[0]
+
+	def show_help():
+		nonlocal my_list
+		
+		scroll = 0
+		keys = pl.convert_to_2d(list(settings.KEYBINDS.keys()),2)
+		values = pl.convert_to_2d(list(settings.KEYBINDS.values()),2)
+
+		for x in (4,6):
+			keys.insert(x,[''])
+			values.insert(x,[''])
+
+		pad.erase()
+		scrollwin.erase()
+
+		pad.attron(COLOR_DICT['LRED_BLACK'])
+		pad.addstr("Console Media Library")
+		pad.attroff(COLOR_DICT['LRED_BLACK'])
+		pad.addstr("  v2.1.2 - 2020\n")
+		pad.addstr("Developed by Anchith Acharya U. and Adhish N.\n")
+		pad.addstr("Github link: ")
+		pad.attron(COLOR_DICT['LRED_BLACK'])
+		pad.addstr("https://github.com/anchithAcharya/Camel\n\n")
+		pad.attroff(COLOR_DICT['LRED_BLACK'])
+
+		pl.print_list(pad,scrollwin, max_YX, keys,values, concat=False)		# TODO: just make this a usual for loop and remove unnecessary modifications to pl.print_list()
+		print_statusbar(('^PgUp','^PgDn','F10'), extra={'Esc':"Close help"})
+
+		pad.attron(COLOR_DICT['LRED_BLACK'])		# TODO: integrate this into pf.safe_print()
+		pad.addstr("Press Esc key to close this menu.\n\n")
+		pad.attroff(COLOR_DICT['LRED_BLACK'])
+		pad.refresh(scroll,0, 2,2, *max_YX)
+
+
+		while 1:
+			ch = pad.getch()
+
+			if ch == curses.KEY_UP:
+				if scroll > 0:
+					scroll -= 1
+					pad.refresh(scroll,0, 2,2, *max_YX)
+			
+			elif ch == curses.KEY_DOWN:
+				if scroll < (14 - pf.PAD_YMAX):
+					scroll += 1
+					pad.refresh(scroll,0, 2,2, *max_YX)
+
+			elif ch == curses.KEY_F10:
+				curses.ungetch(curses.KEY_F10)
+				break
+
+			elif ch == 27:
+				break
+		
+		print_statusbar(('F1','F10'))
 
 	while(1):
 		pad.erase()
@@ -154,7 +234,7 @@ def main(stdscr):
 				if os.getcwd() != '/':
 					my_list.insert(0, '..')
 					
-				my_list = pl.convert_to_2d(my_list,pl.LIST_WIDTH)
+				my_list = pl.convert_to_2d(my_list)
 
 				if path == '..' and settings.SELECT_PREV_DIR_ON_CD_UP:
 					try:
@@ -169,4 +249,9 @@ def main(stdscr):
 
 				set_scroll()
 
+		elif ch == curses.KEY_BACKSPACE: show_help()
+
+		elif ch == curses.KEY_F10: break
+
+os.environ.setdefault('ESCDELAY', '100')
 curses.wrapper(main)
