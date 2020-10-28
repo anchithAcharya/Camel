@@ -1,3 +1,4 @@
+import os
 import math
 import curses
 import pad_funcs_wsl as pf
@@ -35,73 +36,56 @@ def convert_to_2d(mylist,width=None):
 				temp = [[c for c in row if c != ''] for row in ret]
 				return temp
 
-def print_list(win,scrollwin, max_YX, prnt_list,alt_list=[], concat=True):
+def process_list(mylist):
+	if os.getcwd() != '/':
+		mylist.insert(0, '..')
+
+	mylist = convert_to_2d(mylist)
+
+	return mylist
+
+def print_list(win,scrollwin, max_YX, prnt_list):
 	global HSCROLL_INDEX,_HSCROLL_DELAY,LIST_WIDTH
 	
 	print_ellipsis = False
-	if not alt_list: win.erase()
+	win.erase()
 	pf.MAX_USED_SPACE = len(prnt_list)
 
-	if alt_list:
-		max_key_len = len(max([x[0] for x in prnt_list],key=len))
-		max_value_len = len(max([x[0] for x in alt_list],key=len))
-
 	for x,y,line in enumerate2d(prnt_list):
-		if concat:
-			if len(line) > MAX:
-				if [x,y] == SELECTED_ITEM:
-					if HSCROLL_INDEX == 0:
-						_HSCROLL_DELAY += 1
+		if len(line) > MAX:
+			if [x,y] == SELECTED_ITEM:
+				if HSCROLL_INDEX == 0:
+					_HSCROLL_DELAY += 1
 
-						if _HSCROLL_DELAY > 3:
-							_HSCROLL_DELAY = 0
-							HSCROLL_INDEX += 1
+					if _HSCROLL_DELAY > 3:
+						_HSCROLL_DELAY = 0
+						HSCROLL_INDEX += 1
 
-					elif HSCROLL_INDEX > len(line) - (MAX - 1):
-						_HSCROLL_DELAY += 1
+				elif HSCROLL_INDEX > len(line) - (MAX - 1):
+					_HSCROLL_DELAY += 1
 
-						if _HSCROLL_DELAY > 3:
-							_HSCROLL_DELAY = HSCROLL_INDEX = 0
-					
-					else: HSCROLL_INDEX += 1
-
-					line = ' ' + line[HSCROLL_INDEX:][:MAX-2] + ' '
+					if _HSCROLL_DELAY > 3:
+						_HSCROLL_DELAY = HSCROLL_INDEX = 0
 				
-				else:
-					line = line[:MAX-3]
-					print_ellipsis = True
+				else: HSCROLL_INDEX += 1
 
+				line = ' ' + line[HSCROLL_INDEX:][:MAX-2] + ' '
+			
 			else:
-				line += ' ' * (MAX - len(line))
+				line = line[:MAX-3]
+				print_ellipsis = True
 
-		if alt_list:
-			win.attron(COLOR_DICT['LRED_BLACK'])
-
-			if line:
-				line = SEP + (' ' * (max_key_len - len(line))) + line
-
-		elif [x,y] == SELECTED_ITEM:
+		else:
+			line += ' ' * (MAX - len(line))
+			
+		if [x,y] == SELECTED_ITEM:
 			win.attron(curses.A_REVERSE)
 
 		pf.safe_print(win,line)
-		win.attroff(COLOR_DICT['LRED_BLACK'])
 		win.attroff(curses.A_REVERSE)
-		
-		try:
-			value = alt_list[x][y]
-
-			if line:
-				value = value + (' ' * (max_value_len - len(value)))
-				value = ' : ' + value
-			
-			pf.safe_print(win, value)
-		except IndexError: pass
 
 		if print_ellipsis:
-			win.attron(COLOR_DICT["LRED_BLACK"])
-			pf.safe_print(win,'...')
-			win.attroff(COLOR_DICT["LRED_BLACK"])
-
+			pf.safe_print(win, '...', attr = COLOR_DICT["LRED_BLACK"])
 			print_ellipsis = False
 
 		if y == len(prnt_list[x]) - 1:
