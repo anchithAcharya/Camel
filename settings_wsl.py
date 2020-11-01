@@ -1,6 +1,15 @@
+MIN_DIMS = (24, 97)
+GO_ABOVE_ROOT = True
+ROOT = '/mnt/d/Media'
+SHOW_HIDDEN_FILES = False
+SHOW_ONLY_MEDIA_FILES = True
 SELECT_PREV_DIR_ON_CD_UP = False
-ROOT = '.'
-MIN_DIMS = (20, 80)
+MEDIA_PLAYER_PATH = "/mnt/p/VLC/vlc.exe"
+
+class EXT:
+	audio = ['3ga','aac','cda','flac','m4a','mp3','ogg','opus','pls','snd','wma','zab']
+	video = ['264','3gp','avi','dash','dvr','m2t','m2ts','m4v','mkv','mov','mp4','mpg','mts','ogv','rec','rmvb','ts','vob','webm','wmv']
+	subs = ['lrc','srt','sub']
 
 KEYBINDS = {
 	'↑': "Navigate up",
@@ -14,14 +23,19 @@ KEYBINDS = {
 	'PgUp': "Page up",
 	'PgDn': "Page down",
 
+	'Home': "Navigate to first item",
+	'End': "Navigate to bottom-most item",
 
 
-	'Enter': "Open file/directory",
+	'.': "Select item under cursor",
+
+	'^A': "Select all items",
+	'^D': "Deselect all items",
+
+	'Enter/O': "Open file/directory under cursor",
+	'^O': "Group open all selected items directly",
 	
 	'Alt+↑': "Move up by one directory",
-
-	'Home': "Select first item",
-	'End': "Select last (bottom-most) item",
 
 	'F1': "Help",
 	'F4': "Reverse sort order",
