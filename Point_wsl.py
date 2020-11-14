@@ -66,7 +66,7 @@ class Point:
 
 	def __lt__(self, num: int):
 		p = Point(num)
-		return (self.y < p.y) and (self.x < p.x)
+		return (self.y < p.y) or (self.x < p.x)
 
 	def assign_if_none(self, p: "Point") -> "Point":
 		new = Point()
