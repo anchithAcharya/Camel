@@ -4,7 +4,7 @@ from colors_wsl import COLOR_DICT
 from keybinds_wsl import KEY_VALUES
 from settings_wsl import KEYBIND_IN_USE as KEYBINDS
 
-VERSION_NO = "5.1.0"
+VERSION_NO = "5.2.0"
 
 def process_list(lyst, seperator):
 	lyst = list(lyst)

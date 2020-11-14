@@ -40,6 +40,8 @@ def main(screen):
 	curses.ungetch(KEYBINDS["Open file/directory under cursor"][0][0])
 
 
+	qs = ""
+	qs_timeout = -1
 	refresh_screen = False
 
 	def set_scroll():
@@ -226,6 +228,26 @@ def main(screen):
 			change_list(rev = True)
 
 		elif equals(ch, "Quit"): break
+
+		elif ch > 0 and chr(ch).isalnum():
+			qs += chr(ch)
+
+			for file in dir_list.list_1d:
+				if file.name.lower().startswith(qs):
+					dir_list.cursor = file
+
+					set_scroll()
+					break
+
+			qs_timeout = 3
+
+		elif ch == -1:
+			if qs_timeout >= 0:
+				qs_timeout -= 1
+
+				if qs_timeout == 0:
+					qs_timeout = -1
+					qs = ""
 
 		if manage_resize == 2:
 			screen.handle_resize()
