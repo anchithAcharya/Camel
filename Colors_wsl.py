@@ -17,5 +17,3 @@ def init_colors():
 
 		curses.init_pair(ID[0],ID[1],ID[2])
 		COLOR_DICT[color] = curses.color_pair(COLOR_DICT[color][0])
-
-
