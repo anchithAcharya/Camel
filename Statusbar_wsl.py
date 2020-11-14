@@ -1,7 +1,7 @@
 import curses
 from Point_wsl import Point
 from Window_wsl import Window
-from settings_wsl import KEYBINDS
+from settings_wsl import KEYBIND_IN_USE as KEYBINDS
 
 class Statusbar:
 
@@ -12,7 +12,7 @@ class Statusbar:
 		parent.statusbar = self
 
 		self.attr = attr
-		self.content = ({}, None)
+		self.content = []
 
 		self.handle_resize()
 	
@@ -45,18 +45,22 @@ class Statusbar:
 		
 		if attr: self.STATUSBAR.attroff(attr)
 
-	def write(self, keys, extra = None):
-		messages = {key: KEYBINDS[key] for key in keys}
-		messages.update((extra or {}))
+	def write(self, actions, extra = []):
+		messages = []
+		
+		for action in actions:
+			messages.append((KEYBINDS[action][0][1], action))
 
-		self.content = (keys, extra)
+		messages += extra
+
+		self.content = messages
 
 		self.draw()
 		self.safe_print('  ', self.attr | curses.A_REVERSE)
 
-		for key in messages:
+		for key, action in messages:
 			self.safe_print(key)
-			self.safe_print(' ' + messages[key] + '  ', self.attr | curses.A_REVERSE)
+			self.safe_print(' ' + action + '  ', self.attr | curses.A_REVERSE)
 		
 		self.refresh()
 	
@@ -70,5 +74,5 @@ class Statusbar:
 		self.STATUSBAR.resize(*self.dim)
 		self.STATUSBAR.mvwin(*self.start)
 
-		self.write(*self.content)
+		self.write([],extra = self.content)
 		self.refresh()

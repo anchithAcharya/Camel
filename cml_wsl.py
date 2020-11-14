@@ -4,11 +4,12 @@ import subprocess
 from Pad_wsl import Pad
 from List_wsl import List
 from Point_wsl import Point
+from Window_wsl import Window
 import Help_wsl as help_section
 import settings_wsl as settings
 from Statusbar_wsl import Statusbar
-from Window_wsl import Window, Subwindow
-from Colors_wsl import COLOR_DICT, init_colors
+from colors_wsl import COLOR_DICT, init_colors
+from settings_wsl import KEYBIND_IN_USE as KEYBINDS
 
 def main(screen):
 	# screen = curses.initscr()
@@ -21,7 +22,7 @@ def main(screen):
 	frame.refresh()
 
 	statusbar = Statusbar(screen, COLOR_DICT["RED_BLACK"])
-	statusbar.write(('F1','F4','F10'))
+	statusbar.write(('Help', 'Reverse sort order', 'Quit'))
 
 	pad = Pad(Point(settings.MIN_DIMS), frame)
 
@@ -36,7 +37,7 @@ def main(screen):
 	screen.handle_resize()
 
 	dir_list.cursor = dir_list.list_1d[1]
-	curses.ungetch(10)
+	curses.ungetch(KEYBINDS["Open file/directory under cursor"][0][0])
 
 
 	refresh_screen = False
@@ -93,6 +94,9 @@ def main(screen):
 			subprocess.call(settings.MEDIA_PLAYER_PATH + ' ' + path + '  vlc://quit &', shell = True,
 							stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
 
+	def equals(ch, action):
+		return any(ch in keybind for keybind in KEYBINDS[action])
+
 	while 1:
 
 		if refresh_screen or (manage_resize == 0 and dir_list.cursor.show_ellipsis):
@@ -104,7 +108,7 @@ def main(screen):
 		if ch == curses.KEY_RESIZE:
 			manage_resize = 1
 
-		elif ch == curses.KEY_UP:
+		elif equals(ch, "Navigate up"):
 			index = dir_list.cursor.index
 			up = dir_list.atIndex(index - Point(1,0))
 
@@ -116,7 +120,7 @@ def main(screen):
 
 				set_scroll()
 
-		elif ch == curses.KEY_DOWN:
+		elif equals(ch, "Navigate down"):
 			index = dir_list.cursor.index
 			down = dir_list.atIndex(index + Point(1,0))
 
@@ -128,7 +132,7 @@ def main(screen):
 
 				set_scroll()
 		
-		elif ch == curses.KEY_LEFT:
+		elif equals(ch, "Navigate left"):
 			index = dir_list.cursor.index
 			left = dir_list.atIndex(index - Point(0,1))
 
@@ -136,7 +140,7 @@ def main(screen):
 				dir_list.cursor = left
 				set_scroll()
 
-		elif ch == curses.KEY_RIGHT:
+		elif equals(ch, "Navigate right"):
 			index = dir_list.cursor.index
 			right = dir_list.atIndex(index + Point(0,1))
 
@@ -144,13 +148,13 @@ def main(screen):
 				dir_list.cursor = right
 				set_scroll()
 
-		elif ch == curses.KEY_HOME:
+		elif equals(ch, "Navigate to first item"):
 			dir_list.cursor = dir_list.list_1d[0]
 			pad.scroll_pos = 0
 
 			refresh_screen = True
 
-		elif ch == curses.KEY_END:
+		elif equals(ch, "Navigate to bottom-most item"):
 			if settings.END_SELECTS_LAST_ITEM:
 				dir_list.cursor = dir_list.list_1d[-1]
 			
@@ -159,37 +163,34 @@ def main(screen):
 			
 			set_scroll()
 
-		# detect ALT + KEY_UP
-		elif ch == 564:
+		elif equals(ch, "Move up by one directory"):
 			if dir_list.list_1d[0].name == "..":
 				dir_list.cursor = dir_list.list_1d[0]
-				curses.ungetch(10)
+				curses.ungetch(KEYBINDS["Open file/directory under cursor"][0][0])
 			
 			refresh_screen = True
 		
-		# detect CTRL + PAGE UP
-		elif ch == 555:
+		elif equals(ch, "Scroll up"):
 			if pad.scroll_pos > 0:
 				pad.scroll_pos -= 1
 		
 			refresh_screen = True
 		
-		# detect CTRL + PAGE DOWN
-		elif ch == 550:
+		elif equals(ch, "Scroll down"):
 			if pad.scroll_pos < (pad.max_used_space - pad.dim.y):
 				pad.scroll_pos += 1
 			
 			refresh_screen = True
 
-		elif ch == curses.KEY_PPAGE:
+		elif equals(ch, "Page up"):
 			pad.scroll_pos = max(pad.scroll_pos - (pad.dim.y - 1), 0)
 			refresh_screen = True
 		
-		elif ch == curses.KEY_NPAGE:
+		elif equals(ch, "Page down"):
 			pad.scroll_pos = min(pad.scroll_pos + (pad.dim.y - 1), max(pad.max_used_space - pad.dim.y, 0))
 			refresh_screen = True
 
-		elif ch == ord('.'):
+		elif equals(ch, "Select/deselect item under cursor"):
 			if dir_list.cursor not in dir_list.selected_items:
 				if dir_list.cursor.name != "..":
 					dir_list.selected_items.append(dir_list.cursor)
@@ -199,35 +200,32 @@ def main(screen):
 
 			refresh_screen = True
 
-		# detect CTRL + A
-		elif ch == 1:
+		elif equals(ch, "Select all items"):
 			if not dir_list.selected_items == dir_list.list_1d[1:]:
 				dir_list.selected_items = dir_list.list_1d[1:]
 				refresh_screen = True
 			
-			else: curses.ungetch(4)
+			else: curses.ungetch(KEYBINDS["Deselect all items"][0][0])
 		
-		# detect CTRL + D
-		elif ch == 4:
+		elif equals(ch, "Deselect all items"):
 			dir_list.selected_items = []
 			refresh_screen = True
 
-		# detect CTRL + O
-		elif ch == 15:
+		elif equals(ch, "Group open all selected items directly"):
 			if not (dir_list.selected_items == [] and dir_list.cursor.name == ".."):
 				change_list(group_open = True)
 		
-		elif ch == 10 or ch == ord('o'):
+		elif equals(ch, "Open file/directory under cursor"):
 			change_list(dir_list.cursor.name)
 
-		elif ch == curses.KEY_BACKSPACE:	# make it F1 in release version
+		elif equals(ch, "Help"):
 			help_section.show_help(pad, screen.statusbar, screen.handle_resize)
 			refresh_screen = True
 
-		elif ch == curses.KEY_F4:
+		elif equals(ch, "Reverse sort order"):
 			change_list(rev = True)
 
-		elif ch == curses.KEY_F10: break
+		elif equals(ch, "Quit"): break
 
 		if manage_resize == 2:
 			screen.handle_resize()

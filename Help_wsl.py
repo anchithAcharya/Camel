@@ -1,14 +1,15 @@
 import curses
 from Point_wsl import Point
-from Colors_wsl import COLOR_DICT
-import settings_wsl as settings
+from colors_wsl import COLOR_DICT
+from keybinds_wsl import KEY_VALUES
+from settings_wsl import KEYBIND_IN_USE as KEYBINDS
 
-VERSION_NO = "5.0.0"
+VERSION_NO = "5.1.0"
 
 def process_list(lyst, seperator):
 	lyst = list(lyst)
 
-	for i in (4,7,10,14,17,20,22):
+	for i in (4,9,12,16,18,21,24):
 		lyst.insert(i,seperator)
 	
 	mid = int(len(lyst)/2)
@@ -21,11 +22,14 @@ def process_list(lyst, seperator):
 	
 	return lyst, max_len
 
-keys, max_key_len = process_list(settings.KEYBINDS.keys(), '\n')
-values, max_value_len = process_list(settings.KEYBINDS.values(), '')
+keys = [keybind[0][1] for keybind in KEYBINDS.values()]
+actions = KEYBINDS.keys()
+
+keys, max_key_len = process_list(keys, '\n')
+actions, max_value_len = process_list(actions, '')
 
 keys = [[(' ' * (max_len - len(item)) + item) for item in x] for x,max_len in zip(keys,max_key_len)]
-values = [[(item + ' ' * (max_len - len(item))) if item else '' for item in x] for x,max_len in zip(values,max_value_len)]
+actions = [[(item + ' ' * (max_len - len(item))) if item else '' for item in x] for x,max_len in zip(actions,max_value_len)]
 
 section_start = [Point(4,3), Point(4, 3 + (max_key_len[0] + 3 + max_value_len[0]) + 5)]
 SCROLL_LIMIT = Point(len(keys[0]) + 5, 91)
@@ -53,19 +57,22 @@ def show_help(pad, statusbar, handle_resize):
 		pad.safe_print("https://github.com/anchithAcharya/Camel\n\n", COLOR_DICT['LRED_BLACK'])
 		
 		for i in (0,1):
-			for key, value in zip(keys[i], values[i]):
+			for key, action in zip(keys[i], actions[i]):
 				sections[i].safe_print(key, COLOR_DICT['LRED_BLACK'])
 
-				if value:
-					if value == values[i][-1]: sections[i].PAD.insstr(' : ' + value)
-					else: sections[i].safe_print(' : ' + value)
+				if action:
+					if action == actions[i][-1]: sections[i].PAD.insstr(' : ' + action)
+					else: sections[i].safe_print(' : ' + action)
 		
 		pad.safe_print("\nPress Esc key to close this menu.\n\n", COLOR_DICT['LRED_BLACK'], curs_pos = Point(sections[0].start.y + sections[0].dim.y,0))
 
 	
-	statusbar.write(('^PgUp','^PgDn','F10'), extra = {'Esc':"Close help"})
+	statusbar.write(('Scroll up','Scroll down','Scroll left', 'Scroll right'), extra = [('Esc',"Close help")])
 
 	print_help()
+
+	def equals(ch, action):
+		return any(ch in keybind for keybind in KEYBINDS[action])
 
 	while 1:
 		if refresh_screen:
@@ -77,36 +84,35 @@ def show_help(pad, statusbar, handle_resize):
 		if ch == curses.KEY_RESIZE:
 			manage_resize = 1
 		
-		elif ch == curses.KEY_UP:
+		elif equals(ch, "Scroll up"):
 			if scroll.y > 0:
 				scroll.y -= 1
 			
 			refresh_screen = True
 		
-		elif ch == curses.KEY_DOWN:
+		elif equals(ch, "Scroll down"):
 			if scroll.y < (SCROLL_LIMIT.y - (pad.dim.y - 1)):
 				scroll.y += 1
 			
 			refresh_screen = True
 
-		elif ch == curses.KEY_LEFT:
+		elif equals(ch, "Scroll left"):
 			if scroll.x > 0:
 				scroll.x = max(scroll.x -2, 0)
 			
 			refresh_screen = True
 		
-		elif ch == curses.KEY_RIGHT:
+		elif equals(ch, "Scroll right"):
 			if scroll.x < (SCROLL_LIMIT.x - (pad.dim.x - 1)):
 				scroll.x = min(scroll.x + 2, (SCROLL_LIMIT.x - (pad.dim.x - 1)))
 			
 			refresh_screen = True
 
-		elif ch == curses.KEY_F10:
+		elif equals(ch, "Quit"):
 			curses.ungetch(curses.KEY_F10)
 			break
 
-		elif ch == 27:
-			break
+		elif ch == KEY_VALUES["Esc"]: break
 	
 		if manage_resize == 2:
 			handle_resize()
@@ -120,4 +126,4 @@ def show_help(pad, statusbar, handle_resize):
 		
 		if manage_resize != 0: manage_resize = 2
 
-	statusbar.write(('F1','F4','F10'))
+	statusbar.write(('Help', 'Reverse sort order', 'Quit'))

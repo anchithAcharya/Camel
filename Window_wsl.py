@@ -1,6 +1,6 @@
 import curses
 from Point_wsl import Point
-from Colors_wsl import COLOR_DICT
+from colors_wsl import COLOR_DICT
 
 class Window: # TODO: add statusbar, include it in resize()
 

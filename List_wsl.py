@@ -3,7 +3,7 @@ from math import ceil
 from curses import A_REVERSE
 from Point_wsl import Point
 import settings_wsl as settings
-from Colors_wsl import COLOR_DICT
+from colors_wsl import COLOR_DICT
 
 class Marquee:
 	max_strlen = 15
