@@ -7,12 +7,12 @@ from Point_wsl import Point
 from Window_wsl import Window
 import Help_wsl as help_section
 import settings_wsl as settings
+from misc_wsl import Stack_pointer
 from Statusbar_wsl import Statusbar
 from colors_wsl import COLOR_DICT, init_colors
 from settings_wsl import KEYBIND_IN_USE as KEYBINDS
 
 def main(screen):
-	# screen = curses.initscr()
 	curses.curs_set(0)
 	init_colors()
 
@@ -43,6 +43,7 @@ def main(screen):
 	qs = ""
 	qs_timeout = -1
 	refresh_screen = False
+	dirHistory = Stack_pointer()
 
 	def set_scroll():
 		nonlocal refresh_screen
@@ -58,7 +59,7 @@ def main(screen):
 
 		refresh_screen = True
 
-	def change_list(path = dir_list.cursor.name, group_open = False, rev = False):
+	def change_list(path = dir_list.cursor.name, group_open = False, rev = False, add_to_history = True):
 		if rev:
 			dir_list.reshape_list(rev = rev)
 
@@ -69,18 +70,23 @@ def main(screen):
 		else: file_type = dir_list.cursor.type
 
 		if file_type == "folder":
-			if path == "..":
-				prev_wd = os.path.basename(os.getcwd())
+			this_dir = os.getcwd()
 
 			os.chdir(path)
+
+			if add_to_history:
+				dirHistory.append(os.getcwd())
 
 			dir_list.change_list(os.listdir(), (settings.SHOW_HIDDEN_FILES, settings.SHOW_ONLY_MEDIA_FILES))
 
 			if path == '..' and settings.SELECT_PREV_DIR_ON_CD_UP:
+				this_dir = os.path.basename(this_dir)
+				
 				for file in dir_list.list_1d:
-					if file.name == prev_wd:
+					if file.name == this_dir:
 						dir_list.cursor = file
 			
+			statusbar.update_count(dir_list.selected_items)
 			set_scroll()
 
 		elif file_type == "audio" or file_type == "video" or group_open:
@@ -172,6 +178,18 @@ def main(screen):
 			
 			refresh_screen = True
 		
+		elif equals(ch, "Back"):
+			path = dirHistory.up()
+
+			if path:
+				change_list(path, add_to_history = False)
+		
+		elif equals(ch, "Forward"):
+			path = dirHistory.down()
+
+			if path:
+				change_list(path, add_to_history = False)
+
 		elif equals(ch, "Scroll up"):
 			if pad.scroll_pos > 0:
 				pad.scroll_pos -= 1
@@ -200,17 +218,52 @@ def main(screen):
 			else:
 				dir_list.selected_items.remove(dir_list.cursor)
 
+			statusbar.update_count(dir_list.selected_items)
+
+			refresh_screen = True
+
+		elif equals(ch, "Group select"):
+			if dir_list.selected_items == []: continue
+
+			last_selected = dir_list.selected_items[-1]
+
+			if dir_list.cursor == last_selected or dir_list.cursor == dir_list.list_1d[0]: continue
+
+			select = False
+
+			for file in dir_list.list_1d[1:]:
+				if not select and (file == dir_list.cursor or file == last_selected):
+					select = True
+
+					if file not in dir_list.selected_items:
+						dir_list.selected_items.append(file)
+					
+					continue
+				
+				if select:
+					if file not in dir_list.selected_items:
+						dir_list.selected_items.append(file)
+				
+					if file == dir_list.cursor or file == last_selected:
+						break
+			
+			statusbar.update_count(dir_list.selected_items)
+
 			refresh_screen = True
 
 		elif equals(ch, "Select all items"):
 			if not dir_list.selected_items == dir_list.list_1d[1:]:
 				dir_list.selected_items = dir_list.list_1d[1:]
+				statusbar.update_count(dir_list.selected_items)
+
 				refresh_screen = True
 			
 			else: curses.ungetch(KEYBINDS["Deselect all items"][0][0])
 		
 		elif equals(ch, "Deselect all items"):
 			dir_list.selected_items = []
+
+			statusbar.update_count(dir_list.selected_items)
 			refresh_screen = True
 
 		elif equals(ch, "Group open all selected items directly"):

@@ -33,10 +33,14 @@ KEY_VALUES = {
 	'^a' : 1,
 	'^d' : 4,
 	'^o' : 15,
+	'Shift+.' : ord('>'),
 
 	'Alt+↑' : 564,
+	'Alt+←' : 543,
+	'Alt+→' : 558,
 
 	'.' : ord('.'),
+	'*' : ord('*'),
 	'+' : ord('+'),
 	'-' : ord('-'),
 	'/' : ord('/'),
@@ -75,13 +79,15 @@ KEYBINDS.append({
 	"Page up" : create_keybind("PgUp"),
 	"Page down" : create_keybind("PgDn"),
 
-	"Move up by one directory" : create_keybind("Alt+↑"),
-
 	"Navigate to first item" : create_keybind("Home"),
 	"Navigate to bottom-most item" : create_keybind("End"),
 
-	"Select/deselect item under cursor" : create_keybind(".", "Space"),
+	"Move up by one directory" : create_keybind("Alt+↑"),
+	"Back" : create_keybind("Alt+←"),
+	"Forward" : create_keybind("Alt+→"),
 
+	"Select/deselect item under cursor" : create_keybind(".", "Space"),
+	"Group select" : create_keybind("Shift+."),
 	"Select all items" : create_keybind("^a"),
 	"Deselect all items" : create_keybind("^d"),
 
@@ -106,17 +112,19 @@ KEYBINDS.append({
 
 	"Page up" : create_keybind(ord('9'), "PgUp"),
 	"Page down" : create_keybind(ord('3'), "PgDn"),
-
-	"Move up by one directory" : create_keybind("Alt+↑", "/"),
-
 	
 	"Navigate to first item" : create_keybind("Home", ord('7')),
 	"Navigate to bottom-most item" : create_keybind("End", ord('1')),
 
-	"Select/deselect item under cursor" : create_keybind(".", "Space"),
 
-	"Select all items" : create_keybind("+", "^a"),
-	"Deselect all items" : create_keybind("-", "^d"),
+	"Move up by one directory" : create_keybind("Alt+↑", "/"),
+	"Back" : create_keybind("-", "Alt+←"),
+	"Forward" : create_keybind("+", "Alt+→"),
+
+	"Select/deselect item under cursor" : create_keybind(".", "Space"),
+	"Group select" : create_keybind("Shift+.", "Del"),
+	"Select all items" : create_keybind("*", "^a"),
+	"Deselect all items" : create_keybind("^d"),
 
 	"Open file/directory under cursor" : create_keybind(ord('0')),
 	"Group open all selected items directly" : create_keybind("Enter"),
@@ -139,17 +147,18 @@ KEYBINDS.append({
 
 	"Page up" : create_keybind("PgUp"),
 	"Page down" : create_keybind("PgDn"),
-
-	"Move up by one directory" : create_keybind("Alt+↑", "/"),
-	
 	
 	"Navigate to first item" : create_keybind("Home"),
 	"Navigate to bottom-most item" : create_keybind("End"),
 
-	"Select/deselect item under cursor" : create_keybind("Del"),
+	"Move up by one directory" : create_keybind("Alt+↑", "/"),
+	"Back" : create_keybind("-", "Alt+←"),
+	"Forward" : create_keybind("+", "Alt+→"),
 
-	"Select all items" : create_keybind("+", "^a"),
-	"Deselect all items" : create_keybind("-", "^d"),
+	"Select/deselect item under cursor" : create_keybind("Del"),
+	"Group select" : create_keybind("Shift+.", "Del"),
+	"Select all items" : create_keybind("*", "^a"),
+	"Deselect all items" : create_keybind("^d"),
 
 	"Open file/directory under cursor" : create_keybind("Enter"),
 	"Group open all selected items directly" : create_keybind("Insert"),

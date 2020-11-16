@@ -194,6 +194,7 @@ class List:
 
 	def change_list(self, new_list1d: list, process_settings = (False,True)):
 		self.list_1d.clear()
+		self.selected_items.clear()
 
 		self._process_list(new_list1d, *process_settings)
 		

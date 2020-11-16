@@ -4,12 +4,13 @@ from colors_wsl import COLOR_DICT
 from keybinds_wsl import KEY_VALUES
 from settings_wsl import KEYBIND_IN_USE as KEYBINDS
 
-VERSION_NO = "5.2.0"
+VERSION_NO = "5.5.1"
+linebreaks = (4,9,12,18,23,26)
 
 def process_list(lyst, seperator):
 	lyst = list(lyst)
 
-	for i in (4,9,12,16,18,21,24):
+	for i in linebreaks:
 		lyst.insert(i,seperator)
 	
 	mid = int(len(lyst)/2)

@@ -7,12 +7,14 @@ class Statusbar:
 
 	def __init__(self, parent: Window, attr):
 		self.STATUSBAR = parent.WIN.subwin(1,1, 0,0)
+		self.dim = Point(1, parent.dim.x)
 		
 		self.parent = parent
 		parent.statusbar = self
 
 		self.attr = attr
 		self.content = []
+		self.count = 0
 
 		self.handle_resize()
 	
@@ -35,13 +37,11 @@ class Statusbar:
 
 		if attr: self.STATUSBAR.attron(attr)
 
-		while 1:
-			try:
-				self.STATUSBAR.addstr(0,curs_pos_x, string, attr)
-				break
+		try:
+			self.STATUSBAR.addstr(0,curs_pos_x, string, attr)
 
-			except curses.error:
-				return
+		except curses.error:
+			return
 		
 		if attr: self.STATUSBAR.attroff(attr)
 
@@ -67,6 +67,24 @@ class Statusbar:
 	def refresh(self):
 		self.STATUSBAR.refresh()
 	
+	def update_count(self, selected_items: list):
+		self.count = len(selected_items)
+
+		string = " | {} item".format(self.count)
+		if self.count != 1:
+			string += "s"
+		string += " selected."
+
+		strlen = len(string)
+		start = self.dim.x - strlen
+
+		self.draw()
+		self.write([], extra = self.content)
+		
+		if self.count > 0:
+			self.safe_print(string, self.attr | curses.A_REVERSE, start)
+			self.refresh()
+	
 	def handle_resize(self):
 		self.dim = Point(1, self.parent.dim.x)
 		self.start = Point(self.parent.dim.y - 1, 0)
@@ -74,5 +92,6 @@ class Statusbar:
 		self.STATUSBAR.resize(*self.dim)
 		self.STATUSBAR.mvwin(*self.start)
 
-		self.write([],extra = self.content)
+		self.write([], extra = self.content)
+		self.update_count([None] * self.count)
 		self.refresh()
