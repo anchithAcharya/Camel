@@ -1,25 +1,31 @@
 import os
 import curses
 import subprocess
-from Pad_wsl import Pad
-from List_wsl import List
-from Point_wsl import Point
-from Window_wsl import Window
-import Help_wsl as help_section
-import settings_wsl as settings
-from misc_wsl import Stack_pointer
-from Statusbar_wsl import Statusbar
-from colors_wsl import COLOR_DICT, init_colors
-from settings_wsl import KEYBIND_IN_USE as KEYBINDS
+from sys import argv
 
-def main(screen):
+from .misc_wsl import *
+from .Pad_wsl import Pad
+from .List_wsl import List
+from .Point_wsl import Point
+from .Window_wsl import Window
+from .Statusbar_wsl import Statusbar
+from . import settings_wsl as settings
+from . import Help_wsl as help_section
+from .colors_wsl import COLOR_DICT, init_colors
+from .settings_wsl import KEYBIND_IN_USE as KEYBINDS
+
+def main(screen, arg = argv):
 	curses.curs_set(0)
 	init_colors()
 
-	screen = Window(screen)
-	frame = screen.subwin(screen.dim - Point(3,2), Point(1))
-	frame.decorate()
-	frame.refresh()
+	screen = Window("screen", screen)
+
+	screen.frame = frame = screen.subwin(lambda screen, : (screen.dim - Point(7,2), Point(1)), title = "CML")
+
+	info_panel = InfoPanel(screen, lambda screen : (Point(4,screen.frame.dim.x), screen.frame.start + Point(screen.frame.dim.y, 0)), title = "Details")
+	screen.subs.append(info_panel)
+
+	screen.cwdbar = CWDBar(screen)
 
 	statusbar = Statusbar(screen, COLOR_DICT["RED_BLACK"])
 	statusbar.write(('Help', 'Reverse sort order', 'Quit'))
@@ -30,7 +36,16 @@ def main(screen):
 	pad.PAD.nodelay(1)
 	pad.PAD.timeout(300)
 
-	dir_list = List(pad, [settings.ROOT])
+	if len(argv) == 1:
+		arg.append(settings.ROOT)
+	
+	else:
+		arg[1] = os.path.abspath(arg[1])
+		
+		if not os.path.isdir(arg[1]):
+			exit(arg[1] + " is not a valid directory.")
+
+	dir_list = List(pad, [arg[1]])
 	pad.list = dir_list
 
 	manage_resize = 0		# 0: static screen    1: screen is being resized, wait    2: handle resize
@@ -56,6 +71,8 @@ def main(screen):
 					pad.scroll_pos = (len(dir_list.LIST) - pad.dim.y)
 				
 			else: pad.scroll_pos = dir_list.cursor.index.y
+
+		info_panel.show_info(dir_list.cursor)
 
 		refresh_screen = True
 
@@ -86,7 +103,9 @@ def main(screen):
 					if file.name == this_dir:
 						dir_list.cursor = file
 			
+			screen.cwdbar.print_cwd()
 			statusbar.update_count(dir_list.selected_items)
+			
 			set_scroll()
 
 		elif file_type == "audio" or file_type == "video" or group_open:
@@ -264,6 +283,13 @@ def main(screen):
 			dir_list.selected_items = []
 
 			statusbar.update_count(dir_list.selected_items)
+			refresh_screen = True
+
+		elif equals(ch, "Toggle info panel"):
+			settings.SHOW_INFO_PANEL = not settings.SHOW_INFO_PANEL
+			screen.handle_resize()
+			set_scroll()
+
 			refresh_screen = True
 
 		elif equals(ch, "Group open all selected items directly"):

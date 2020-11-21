@@ -1,14 +1,15 @@
 import curses
-from Point_wsl import Point
-from Window_wsl import Window
-from settings_wsl import KEYBIND_IN_USE as KEYBINDS
+from .Point_wsl import Point
+from .Window_wsl import Window
+from .settings_wsl import KEYBIND_IN_USE as KEYBINDS
 
 class Statusbar:
 
 	def __init__(self, parent: Window, attr):
 		self.STATUSBAR = parent.WIN.subwin(1,1, 0,0)
 		self.dim = Point(1, parent.dim.x)
-		
+		self.start = Point()
+
 		self.parent = parent
 		parent.statusbar = self
 

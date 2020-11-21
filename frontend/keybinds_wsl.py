@@ -26,12 +26,13 @@ KEY_VALUES = {
 	'Enter' : 10,
 	'Esc' : 27,
 
-	'Insert' : 331,
-	'Del' : 330,
+	'Insert' : curses.KEY_IC,
+	'Del' : curses.KEY_DC,
 	'Backspace' : curses.KEY_BACKSPACE,
 
 	'^a' : 1,
 	'^d' : 4,
+	'^i' : 9,
 	'^o' : 15,
 	'Shift+.' : ord('>'),
 
@@ -53,14 +54,13 @@ KEY_VALUES = {
 
 def create_keybind(*args):
 	temp = []
-
 	for key_repr in args:
 		if key_repr in KEY_VALUES:
 			temp.append((KEY_VALUES[key_repr], key_repr))
-	
+
 		else:
 			temp.append((key_repr, chr(key_repr)))
-
+			
 	return tuple(temp)
 
 KEYBINDS = []
@@ -82,12 +82,16 @@ KEYBINDS.append({
 	"Navigate to first item" : create_keybind("Home"),
 	"Navigate to bottom-most item" : create_keybind("End"),
 
+	"Toggle info panel" : create_keybind("^i"),
+
+
 	"Move up by one directory" : create_keybind("Alt+↑"),
 	"Back" : create_keybind("Alt+←"),
 	"Forward" : create_keybind("Alt+→"),
 
 	"Select/deselect item under cursor" : create_keybind(".", "Space"),
 	"Group select" : create_keybind("Shift+."),
+
 	"Select all items" : create_keybind("^a"),
 	"Deselect all items" : create_keybind("^d"),
 
@@ -116,6 +120,8 @@ KEYBINDS.append({
 	"Navigate to first item" : create_keybind("Home", ord('7')),
 	"Navigate to bottom-most item" : create_keybind("End", ord('1')),
 
+	"Toggle info panel" : create_keybind("^i"),
+
 
 	"Move up by one directory" : create_keybind("Alt+↑", "/"),
 	"Back" : create_keybind("-", "Alt+←"),
@@ -123,11 +129,13 @@ KEYBINDS.append({
 
 	"Select/deselect item under cursor" : create_keybind(".", "Space"),
 	"Group select" : create_keybind("Shift+.", "Del"),
+	
 	"Select all items" : create_keybind("*", "^a"),
 	"Deselect all items" : create_keybind("^d"),
 
 	"Open file/directory under cursor" : create_keybind(ord('0')),
 	"Group open all selected items directly" : create_keybind("Enter"),
+
 	
 	"Help" : create_keybind("F1", "Backspace"),
 	"Reverse sort order" : create_keybind("F4"),
@@ -151,12 +159,16 @@ KEYBINDS.append({
 	"Navigate to first item" : create_keybind("Home"),
 	"Navigate to bottom-most item" : create_keybind("End"),
 
+	"Toggle info panel" : create_keybind("^i"),
+
+
 	"Move up by one directory" : create_keybind("Alt+↑", "/"),
 	"Back" : create_keybind("-", "Alt+←"),
 	"Forward" : create_keybind("+", "Alt+→"),
 
 	"Select/deselect item under cursor" : create_keybind("Del"),
 	"Group select" : create_keybind("Shift+.", "Del"),
+
 	"Select all items" : create_keybind("*", "^a"),
 	"Deselect all items" : create_keybind("^d"),
 

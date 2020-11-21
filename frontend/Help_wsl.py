@@ -1,11 +1,11 @@
 import curses
-from Point_wsl import Point
-from colors_wsl import COLOR_DICT
-from keybinds_wsl import KEY_VALUES
-from settings_wsl import KEYBIND_IN_USE as KEYBINDS
+from .Point_wsl import Point
+from .colors_wsl import COLOR_DICT
+from .keybinds_wsl import KEY_VALUES
+from .settings_wsl import KEYBIND_IN_USE as KEYBINDS
 
-VERSION_NO = "5.5.1"
-linebreaks = (4,9,12,18,23,26)
+VERSION_NO = "6.2.0"
+linebreaks = (4,9,12,15,20,23,26,29,30)
 
 def process_list(lyst, seperator):
 	lyst = list(lyst)

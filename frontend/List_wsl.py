@@ -1,9 +1,9 @@
 import os
 from math import ceil
 from curses import A_REVERSE
-from Point_wsl import Point
-import settings_wsl as settings
-from colors_wsl import COLOR_DICT
+from .Point_wsl import Point
+from .colors_wsl import COLOR_DICT
+from . import settings_wsl as settings
 
 class Marquee:
 	max_strlen = 15
@@ -151,13 +151,13 @@ class List:
 			if os.path.isdir(item):
 				types.append('folder')
 
-			elif item.endswith(tuple(settings.EXT.audio)):
+			elif item.endswith(settings.EXT["audio"]):
 				types.append('audio')
 			
-			elif item.endswith(tuple(settings.EXT.video)):
+			elif item.endswith(settings.EXT["video"]):
 				types.append('video')
 			
-			elif item.endswith(tuple(settings.EXT.subs)):
+			elif item.endswith(settings.EXT["subs"]):
 				types.append('subs')
 			
 			else:

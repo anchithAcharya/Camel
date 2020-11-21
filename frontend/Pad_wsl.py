@@ -1,5 +1,5 @@
 import curses
-from Point_wsl import Point
+from .Point_wsl import Point
 
 class Scrollwin:
 		SCROLL_CHAR = '█'
