@@ -49,20 +49,25 @@ class Scrollwin:
 
 class Pad:
 
-	def __init__(self, size: Point, parent):
+	def __init__(self, size: Point, parent, noScrollBar = False):
 		self.PAD = curses.newpad(1,1)
 		self.parent = parent
 		parent.pad = self
 		
-		self.SCROLLBAR = Scrollwin(self)
-
 		self.scroll_pos = 0
 		self.max_used_space = None
 
 		self.max = Point()
-		self.dim = self.parent.dim - Point(2,3)
+		self.dim = self.parent.dim - 2
 
-		self.start = Point(parent.WIN.getparyx()) + 1
+		if noScrollBar:
+			self.SCROLLBAR = None
+		
+		else:
+			self.SCROLLBAR = Scrollwin(self)
+			self.dim.x -= 1
+
+		self.start = parent.start + 1
 
 		self.list = None
 
@@ -88,7 +93,7 @@ class Pad:
 		
 		self.PAD.refresh(*scroll, *offset, *(self.dim + (offset - 1)))
 		
-		if refresh_scrollbar:
+		if self.SCROLLBAR and refresh_scrollbar:
 			self.SCROLLBAR.update_scroll_pos()
 			self.SCROLLBAR.scroll()
 			self.SCROLLBAR.refresh()
@@ -110,8 +115,8 @@ class Pad:
 		if self.max.x < self.dim.x:
 			self.resize(Point(self.max.y, self.dim.x))
 
-		self.SCROLLBAR.resize(self.dim.y)
 		if self.list: self.list.reshape_list()
+		if self.SCROLLBAR: self.SCROLLBAR.resize(self.dim.y)
 
 		self.refresh()
 

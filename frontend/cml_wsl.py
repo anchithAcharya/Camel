@@ -1,7 +1,6 @@
 import os
 import curses
 import subprocess
-from sys import argv
 
 from .misc_wsl import *
 from .Pad_wsl import Pad
@@ -14,7 +13,7 @@ from . import Help_wsl as help_section
 from .colors_wsl import COLOR_DICT, init_colors
 from .settings_wsl import KEYBIND_IN_USE as KEYBINDS
 
-def main(screen, arg = argv):
+def main(screen, root_path):
 	curses.curs_set(0)
 	init_colors()
 
@@ -25,7 +24,7 @@ def main(screen, arg = argv):
 	info_panel = InfoPanel(screen, lambda screen : (Point(4,screen.frame.dim.x), screen.frame.start + Point(screen.frame.dim.y, 0)), title = "Details")
 	screen.subs.append(info_panel)
 
-	screen.cwdbar = CWDBar(screen)
+	screen.cwdbar = CWDBar(screen, root_path)
 
 	statusbar = Statusbar(screen, COLOR_DICT["RED_BLACK"])
 	statusbar.write(('Help', 'Reverse sort order', 'Quit'))
@@ -36,23 +35,11 @@ def main(screen, arg = argv):
 	pad.PAD.nodelay(1)
 	pad.PAD.timeout(300)
 
-	if len(argv) == 1:
-		arg.append(settings.ROOT)
-	
-	else:
-		arg[1] = os.path.abspath(arg[1])
-		
-		if not os.path.isdir(arg[1]):
-			exit(arg[1] + " is not a valid directory.")
-
-	dir_list = List(pad, [arg[1]])
+	dir_list = List(pad, [])
 	pad.list = dir_list
 
 	manage_resize = 0		# 0: static screen    1: screen is being resized, wait    2: handle resize
 	screen.handle_resize()
-
-	dir_list.cursor = dir_list.list_1d[1]
-	curses.ungetch(KEYBINDS["Open file/directory under cursor"][0][0])
 
 
 	qs = ""
@@ -86,7 +73,7 @@ def main(screen, arg = argv):
 		if group_open: file_type = "multiple"
 		else: file_type = dir_list.cursor.type
 
-		if file_type == "folder":
+		if file_type in ("dir", "media_dir"):
 			this_dir = os.getcwd()
 
 			os.chdir(path)
@@ -108,21 +95,23 @@ def main(screen, arg = argv):
 			
 			set_scroll()
 
-		elif file_type == "audio" or file_type == "video" or group_open:
+		elif file_type in ("audio", "movie", "tv_show") or group_open:
 			if group_open:
 				path = ""
 
 				for item in (dir_list.selected_items or [dir_list.cursor]):
-					path += '"{}" '.format(item.name)
+					path += 'file:///"{}" '.format(os.path.realpath(item.name))
 			
 			else:
-				path = '"{}"'.format(path)
+				path = 'file:///"{}"'.format(os.path.realpath(path))
 
 			subprocess.call(settings.MEDIA_PLAYER_PATH + ' ' + path + '  vlc://quit &', shell = True,
 							stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
 
 	def equals(ch, action):
 		return any(ch in keybind for keybind in KEYBINDS[action])
+
+	change_list(root_path, add_to_history = False)
 
 	while 1:
 
@@ -339,5 +328,5 @@ def main(screen, arg = argv):
 		
 		if manage_resize != 0: manage_resize = 2
 
-os.environ.setdefault('ESCDELAY', '100')
-curses.wrapper(main)
+def start(path):
+	curses.wrapper(main, path)

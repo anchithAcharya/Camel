@@ -4,6 +4,7 @@ from curses import A_REVERSE
 from .Point_wsl import Point
 from .colors_wsl import COLOR_DICT
 from . import settings_wsl as settings
+from ..backend.sql import query_file_type
 
 class Marquee:
 	max_strlen = 15
@@ -148,32 +149,12 @@ class List:
 		to_be_removed = []
 
 		for item in list_1d:
-			if os.path.isdir(item):
-				types.append('folder')
-
-			elif item.endswith(settings.EXT["audio"]):
-				types.append('audio')
-			
-			elif item.endswith(settings.EXT["video"]):
-				types.append('video')
-			
-			elif item.endswith(settings.EXT["subs"]):
-				types.append('subs')
-			
-			else:
-				if show_only_media_files:
-					to_be_removed.append(item)
-				
-				else:
-					types.append(None)
-		
-		for value in to_be_removed:
-			list_1d.remove(value)
+			types.append(query_file_type(item))
 
 		if (os.getcwd() != settings.ROOT) or settings.GO_ABOVE_ROOT:
 			if os.getcwd() != '/':
 				list_1d.insert(0, '..')
-				types.insert(0, 'folder')
+				types.insert(0, 'media_dir')
 
 		for item, file_type in zip(list_1d, types):
 			self.list_1d.append(Marquee(item, file_type))

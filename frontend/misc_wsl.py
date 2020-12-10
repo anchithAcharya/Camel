@@ -1,9 +1,13 @@
 import os
 import curses
+from .Pad_wsl import Pad
 from .Point_wsl import Point
 from .Window_wsl import Subwindow
 from .colors_wsl import COLOR_DICT
 from . import settings_wsl as settings
+
+def human_size(fsize, units = (' bytes','KB','MB','GB')):
+	return "{:.2f}{}".format(float(fsize), units[0]) if fsize < 1024 else human_size(fsize / 1024, units[1:])
 
 class Stack_pointer:
 	max_limit = 30
@@ -44,18 +48,21 @@ class Stack_pointer:
 
 class CWDBar:
 
-	def __init__(self, parent):
+	def __init__(self, parent, root_path):
 		self.CWDBAR = parent.WIN.subwin(1,1, 0,0)
+		
 		self.dim = Point(1, parent.dim.x)
 		self.start = Point()
 		
 		self.parent = parent
 		parent.cwdbar = self
 
+		self.root = root_path
+
 		self.handle_resize()
 	
 	def print_cwd(self):
-		cwd = os.path.relpath(os.getcwd(), settings.ROOT)
+		cwd = os.path.relpath(os.getcwd(), self.root)
 
 		if cwd.startswith('.'):
 			cwd = cwd.replace('.', '')
@@ -92,24 +99,26 @@ class CWDBar:
 
 class InfoPanel(Subwindow):
 	
+	def __init__(self, parent, constraint, title):
+		super().__init__(parent, constraint, title)
+
+		self.pad = Pad(self.dim - 2, self, noScrollBar = True)
+		self.decorate()
+	
 	def show_info(self, cursor):
 		self.cache = cursor
 		
 		if not settings.SHOW_INFO_PANEL:
 			return
 		
-		self.WIN.erase()
-		self.decorate()
-		
-		def human_size(bytes, units = [' bytes','KB','MB','GB']):
-			return str(bytes) + units[0] if bytes < 1024 else human_size(bytes>>10, units[1:])
-		
 		name = os.path.split(os.path.abspath(cursor.name))[-1]
 		size = human_size(os.path.getsize(cursor.name))
-		self.safe_print(name, curs_pos = Point(1))
-		self.safe_print(size, curs_pos = Point(2,1))
+		
+		self.pad.erase()
 
-		self.refresh()
+		self.pad.safe_print(name + '\n' + size)
+
+		self.pad.refresh()
 
 	def handle_resize(self):
 		if settings.SHOW_INFO_PANEL:
