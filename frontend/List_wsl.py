@@ -66,7 +66,7 @@ class Marquee:
 		elif self.type == "audio":
 			attr = COLOR_DICT["ORANGE_BLACK"]
 		
-		elif self.type == "video":
+		elif self.type in ("movie", "tv_show"):
 			attr = COLOR_DICT["PURPLE_BLACK"]
 		
 		elif self.type == "subs":
@@ -149,7 +149,14 @@ class List:
 		to_be_removed = []
 
 		for item in list_1d:
-			types.append(query_file_type(item))
+			if item.endswith(settings.EXT['subtitles']):
+				to_be_removed.append(item)
+			
+			else:
+				types.append(query_file_type(item))
+
+		for item in to_be_removed:
+			list_1d.remove(item)
 
 		if (os.getcwd() != settings.ROOT) or settings.GO_ABOVE_ROOT:
 			if os.getcwd() != '/':

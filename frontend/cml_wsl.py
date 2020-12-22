@@ -10,6 +10,7 @@ from .Window_wsl import Window
 from .Statusbar_wsl import Statusbar
 from . import settings_wsl as settings
 from . import Help_wsl as help_section
+from ..backend.sql import generate_paths
 from .colors_wsl import COLOR_DICT, init_colors
 from .settings_wsl import KEYBIND_IN_USE as KEYBINDS
 
@@ -97,15 +98,16 @@ def main(screen, root_path):
 
 		elif file_type in ("audio", "movie", "tv_show") or group_open:
 			if group_open:
-				path = ""
-
-				for item in (dir_list.selected_items or [dir_list.cursor]):
-					path += 'file:///"{}" '.format(os.path.realpath(item.name))
+				to_open = dir_list.selected_items or [dir_list.cursor]
 			
-			else:
-				path = 'file:///"{}"'.format(os.path.realpath(path))
+				paths = generate_paths(to_open)
+				cmd = settings.MEDIA_PLAYER_PATH + ' ' + paths + '  vlc://quit &'
 
-			subprocess.call(settings.MEDIA_PLAYER_PATH + ' ' + path + '  vlc://quit &', shell = True,
+			else:
+				ret = generate_paths([path])
+				cmd = f"(cd {ret[0]} && {settings.MEDIA_PLAYER_PATH} {ret[1]}  vlc://quit &)"
+			
+			subprocess.call(cmd, shell = True,
 							stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
 
 	def equals(ch, action):
