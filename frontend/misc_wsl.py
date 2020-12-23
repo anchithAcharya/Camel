@@ -111,12 +111,13 @@ class InfoPanel(Subwindow):
 		if not settings.SHOW_INFO_PANEL:
 			return
 		
-		name = os.path.split(os.path.abspath(cursor.name))[-1]
-		size = human_size(os.path.getsize(cursor.name))
+		path = cursor.path
+		size = human_size(cursor.size)
+
 		
 		self.pad.erase()
 
-		self.pad.safe_print(name + '\n' + size)
+		self.pad.safe_print(path + '\n' + size)
 
 		self.pad.refresh()
 

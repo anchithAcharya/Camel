@@ -36,7 +36,7 @@ def main(screen, root_path):
 	pad.PAD.nodelay(1)
 	pad.PAD.timeout(300)
 
-	dir_list = List(pad, [])
+	dir_list = List(pad, root_path, [])
 	pad.list = dir_list
 
 	manage_resize = 0		# 0: static screen    1: screen is being resized, wait    2: handle resize
@@ -64,15 +64,23 @@ def main(screen, root_path):
 
 		refresh_screen = True
 
-	def change_list(path = dir_list.cursor.name, group_open = False, rev = False, add_to_history = True):
+	def change_list(path = None, group_open = False, rev = False, add_to_history = True):
 		if rev:
 			dir_list.reshape_list(rev = rev)
 
 			set_scroll()
 			return
 		
+		if not path:
+			path = dir_list.cursor.name
+
 		if group_open: file_type = "multiple"
-		else: file_type = dir_list.cursor.type
+		else:
+			if dir_list.cursor:
+				file_type = dir_list.cursor.type
+			
+			else:
+				file_type = "media_dir"
 
 		if file_type in ("dir", "media_dir"):
 			this_dir = os.getcwd()
@@ -262,8 +270,13 @@ def main(screen, root_path):
 			refresh_screen = True
 
 		elif equals(ch, "Select all items"):
-			if not dir_list.selected_items == dir_list.list_1d[1:]:
-				dir_list.selected_items = dir_list.list_1d[1:]
+			all_items = dir_list.list_1d
+			
+			if all_items[0].name == "..":
+				all_items = all_items[1:]
+
+			if not dir_list.selected_items == all_items:
+				dir_list.selected_items = all_items
 				statusbar.update_count(dir_list.selected_items)
 
 				refresh_screen = True

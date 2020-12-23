@@ -111,6 +111,7 @@ class Pad:
 
 	def handle_resize(self):
 		self.dim = self.parent.dim - Point(2,3)
+		self.start = self.parent.start + 1
 
 		if self.max.x < self.dim.x:
 			self.resize(Point(self.max.y, self.dim.x))

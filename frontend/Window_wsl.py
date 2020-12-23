@@ -96,6 +96,11 @@ class Subwindow(Window):
 		if self.title:
 			self.safe_print(" " + self.title + " ", curs_pos = Point(0,5))
 
+	def refresh(self):
+		super().refresh()
+		
+		if self.pad: self.pad.refresh()
+
 	def handle_resize(self):
 		if self.title == "CML":
 			if settings.SHOW_INFO_PANEL:

@@ -4,7 +4,7 @@ from curses import A_REVERSE
 from .Point_wsl import Point
 from .colors_wsl import COLOR_DICT
 from . import settings_wsl as settings
-from ..backend.sql import query_file_type
+from ..backend.sql import query_file_type, query_file_details
 
 class Marquee:
 	max_strlen = 15
@@ -94,7 +94,7 @@ class List:
 	
 	max_strlen = Marquee.max_strlen
 
-	def __init__(self, parent, dir_list = []):
+	def __init__(self, parent, root_path, dir_list = []):
 		self.cursor = None
 		self.selected_items = []
 
@@ -106,6 +106,7 @@ class List:
 		self.list_1d = []
 		self.LIST = [[]]
 		
+		self.root_path = root_path
 		self.change_list(dir_list)
 
 	def _enumerate2d(self):
@@ -117,6 +118,8 @@ class List:
 		return temp
 
 	def _convert_to_2d(self,list_1d, width = None):
+		if not list_1d: return [[]]
+		
 		width = width or self.max_list_width
 
 		x = width
@@ -158,14 +161,31 @@ class List:
 		for item in to_be_removed:
 			list_1d.remove(item)
 
-		if (os.getcwd() != settings.ROOT) or settings.GO_ABOVE_ROOT:
-			if os.getcwd() != '/':
-				list_1d.insert(0, '..')
-				types.insert(0, 'media_dir')
+		if os.getcwd() != self.root_path and os.getcwd() != '/':
+			list_1d.insert(0, '..')
+			types.insert(0, 'media_dir')
 
 		for item, file_type in zip(list_1d, types):
 			self.list_1d.append(Marquee(item, file_type))
 		
+		for item in self.list_1d:
+			file_details = query_file_details(os.path.abspath(item.name), item.type)
+
+			if item.type == "media_dir":
+				item.path, item.size, item.children_count = file_details
+			
+			else:
+				item.path, item.size, item.length, item.language, item.genre, item.year = file_details[:6]
+
+				if item.type == "movie":
+					item.watched, item.franchise, item.installment = file_details[6:]
+			
+				elif item.type == "tv_show":
+					item.watched, item.show_name, item.season, item.episode = file_details[6:]
+
+				elif item.type == "audio":
+					item.artist, item.album = file_details[6:]
+
 		self.LIST = self._convert_to_2d(self.list_1d)
 
 	def reshape_list(self, width = None, rev = False):
@@ -181,6 +201,8 @@ class List:
 		self._calculate_indices()
 
 	def change_list(self, new_list1d: list, process_settings = (False,True)):
+		if not new_list1d: return
+
 		self.list_1d.clear()
 		self.selected_items.clear()
 
