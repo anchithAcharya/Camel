@@ -53,7 +53,8 @@ class Window: # TODO: add statusbar, include it in resize()
 	def handle_resize(self):
 		self.dim = Point(self.WIN.getmaxyx())
 
-		if self.dim < 10:
+		# top_padding + (cml top border + (cml content) + cml bottom border) + (details top border + (details content) + details bottom border) + cwdbar + statusbar
+		if self.dim < (1 + (1 + (1) + 1) + (1 + (3) + 1) + 1 + 1):
 			exit("window size too small")
 
 		self.WIN.clear()
@@ -104,7 +105,7 @@ class Subwindow(Window):
 	def handle_resize(self):
 		if self.title == "CML":
 			if settings.SHOW_INFO_PANEL:
-				self.constraint = lambda screen, : (screen.dim - Point(7,2), Point(1))
+				self.constraint = lambda screen, : (screen.dim - Point(8,2), Point(1))
 		
 			else:
 				self.constraint = lambda screen, : (screen.dim - Point(3,2), Point(1))

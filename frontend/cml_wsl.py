@@ -20,9 +20,9 @@ def main(screen, root_path):
 
 	screen = Window("screen", screen)
 
-	screen.frame = frame = screen.subwin(lambda screen, : (screen.dim - Point(7,2), Point(1)), title = "CML")
+	screen.frame = frame = screen.subwin(lambda screen, : (screen.dim - Point(8,2), Point(1)), title = "CML")
 
-	info_panel = InfoPanel(screen, lambda screen : (Point(4,screen.frame.dim.x), screen.frame.start + Point(screen.frame.dim.y, 0)), title = "Details")
+	info_panel = InfoPanel(screen, lambda screen : (Point(5,screen.frame.dim.x), screen.frame.start + Point(screen.frame.dim.y, 0)), title = "Details")
 	screen.subs.append(info_panel)
 
 	screen.cwdbar = CWDBar(screen, root_path)
@@ -304,6 +304,10 @@ def main(screen, root_path):
 			change_list(dir_list.cursor.name)
 
 		elif equals(ch, "Help"):
+			settings.SHOW_INFO_PANEL = False
+			screen.handle_resize()
+			set_scroll()
+
 			help_section.show_help(pad, screen.statusbar, screen.handle_resize)
 			refresh_screen = True
 

@@ -6,8 +6,19 @@ from .Window_wsl import Subwindow
 from .colors_wsl import COLOR_DICT
 from . import settings_wsl as settings
 
-def human_size(fsize, units = (' bytes','KB','MB','GB')):
-	return "{:.2f}{}".format(float(fsize), units[0]) if fsize < 1024 else human_size(fsize / 1024, units[1:])
+def simplify_size(fsize, units = (' bytes',' KB',' MB',' GB')):
+	return "{:.2f}{}".format(float(fsize), units[0]) if fsize < 1024 else simplify_size(fsize / 1024, units[1:])
+
+def simplify_length(seconds):
+	if not seconds: return None
+	
+	hours = seconds // (60*60)
+	seconds %= (60*60)
+
+	minutes = seconds // 60
+	seconds %= 60
+	
+	return "%02i:%02i:%02i" % (hours, minutes, seconds)
 
 class Stack_pointer:
 	max_limit = 30
@@ -106,20 +117,45 @@ class InfoPanel(Subwindow):
 		self.decorate()
 	
 	def show_info(self, cursor):
+		pad = self.pad
 		self.cache = cursor
 		
 		if not settings.SHOW_INFO_PANEL:
 			return
 		
-		path = cursor.path
-		size = human_size(cursor.size)
+		size = simplify_size(cursor.size)
 
-		
-		self.pad.erase()
+		pad.erase()
 
-		self.pad.safe_print(path + '\n' + size)
+		if cursor.type == "media_dir":
+			pad.safe_print(f"Size: {size} | {cursor.children_count} files in folder.\n")
 
-		self.pad.refresh()
+		else:
+			pad.safe_print(f"Size: {size} | Length: {simplify_length(cursor.length)} | Language: {cursor.language} | Genre: {cursor.genre} | Year: {cursor.year}\n")
+			
+			if cursor.type == "movie":
+				if cursor.franchise and cursor.installment:
+					pad.safe_print(f"Franchise: {cursor.franchise} | Installment: {cursor.installment}")
+					
+				if cursor.watched:
+					pad.safe_print(" | ")
+					pad.safe_print("Movie watched", attr = COLOR_DICT["RED_BLACK"] | curses.A_REVERSE)
+					pad.safe_print("\n")
+			
+			elif cursor.type == "tv_show":
+				pad.safe_print(f"Show name: {cursor.show_name} | Season: {cursor.season} | Episode: {cursor.episode}")
+				
+				if cursor.watched:
+					pad.safe_print(" | ")
+					pad.safe_print("Episode watched", attr = COLOR_DICT["RED_BLACK"] | curses.A_REVERSE)
+					pad.safe_print("\n")
+
+			elif cursor.type == "audio":
+				pad.safe_print(f"Artist: {cursor.artist} | Album: {cursor.album}\n")
+
+		pad.safe_print(f"Path: {cursor.path}")
+
+		pad.refresh()
 
 	def handle_resize(self):
 		if settings.SHOW_INFO_PANEL:
