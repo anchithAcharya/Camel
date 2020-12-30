@@ -4,20 +4,22 @@ from .frontend import cml_wsl
 from .backend import register
 from .frontend.settings_wsl import ROOT
 
-os.chdir(argv[1])
-
-if len(argv) == 2:
-	argv.append(ROOT)
+if "-r" in argv:
+	recalculate = True
+	argv.remove("-r")
 
 else:
-	argv[2] = os.path.abspath(argv[2])
-	
-	if not os.path.isdir(argv[2]):
-		exit(argv[2] + " is not a valid directory.")
+	recalculate = False
 
-path = argv[2]
+if len(argv) == 1:
+	argv.append(ROOT)
 
-new_path = register.reg(path)
+path = argv[1]
+
+if not os.path.isdir(path):
+	exit(path + " is not a valid directory.")
+
+new_path = register.reg(path, recalculate)
 
 os.environ.setdefault('ESCDELAY', '100')
 cml_wsl.start(new_path)

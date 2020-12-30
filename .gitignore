@@ -1,2 +1,5 @@
 .vscode
 __pycache__
+test/temp.sh
+test/test.py
+todo.txt

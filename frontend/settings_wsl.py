@@ -2,7 +2,7 @@ from .keybinds_wsl import KEYBINDS
 
 MIN_DIMS = (24, 97)
 GO_ABOVE_ROOT = True
-ROOT = "/home/anchith/cml/backend/media"
+ROOT = "/home/anchith/media"
 SHOW_HIDDEN_FILES = True
 SHOW_ONLY_MEDIA_FILES = False
 KEYBIND_IN_USE = KEYBINDS[1]

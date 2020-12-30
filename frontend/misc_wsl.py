@@ -132,15 +132,20 @@ class InfoPanel(Subwindow):
 
 		else:
 			pad.safe_print(f"Size: {size} | Length: {simplify_length(cursor.length)} | Language: {cursor.language} | Genre: {cursor.genre} | Year: {cursor.year}\n")
-			
+
 			if cursor.type == "movie":
+				end = ""
+				
 				if cursor.franchise and cursor.installment:
 					pad.safe_print(f"Franchise: {cursor.franchise} | Installment: {cursor.installment}")
+					end = "\n"
 					
 				if cursor.watched:
 					pad.safe_print(" | ")
 					pad.safe_print("Movie watched", attr = COLOR_DICT["RED_BLACK"] | curses.A_REVERSE)
-					pad.safe_print("\n")
+					end = "\n"
+				
+				pad.safe_print(end)
 			
 			elif cursor.type == "tv_show":
 				pad.safe_print(f"Show name: {cursor.show_name} | Season: {cursor.season} | Episode: {cursor.episode}")
@@ -148,7 +153,8 @@ class InfoPanel(Subwindow):
 				if cursor.watched:
 					pad.safe_print(" | ")
 					pad.safe_print("Episode watched", attr = COLOR_DICT["RED_BLACK"] | curses.A_REVERSE)
-					pad.safe_print("\n")
+				
+				pad.safe_print("\n")
 
 			elif cursor.type == "audio":
 				pad.safe_print(f"Artist: {cursor.artist} | Album: {cursor.album}\n")
@@ -160,6 +166,8 @@ class InfoPanel(Subwindow):
 	def handle_resize(self):
 		if settings.SHOW_INFO_PANEL:
 			super().handle_resize()
+
+			self.show_info(self.cache)
 			self.refresh()
 		
 		else:
