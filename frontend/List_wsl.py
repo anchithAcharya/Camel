@@ -175,7 +175,7 @@ class List:
 				item.path, item.size, item.children_count = file_details
 			
 			else:
-				item.path, item.size, item.length, item.language, item.genre, item.year = file_details[:6]
+				item.path, item.size, item.length, item.year, item.language, item.genre = file_details[:6]
 
 				if item.type == "movie":
 					item.watched, item.franchise, item.installment = file_details[6:]

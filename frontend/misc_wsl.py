@@ -122,7 +122,7 @@ class InfoPanel(Subwindow):
 		
 		if not settings.SHOW_INFO_PANEL:
 			return
-		
+
 		size = simplify_size(cursor.size)
 
 		pad.erase()
@@ -131,7 +131,10 @@ class InfoPanel(Subwindow):
 			pad.safe_print(f"Size: {size} | {cursor.children_count} files in folder.\n")
 
 		else:
-			pad.safe_print(f"Size: {size} | Length: {simplify_length(cursor.length)} | Language: {cursor.language} | Genre: {cursor.genre} | Year: {cursor.year}\n")
+			language = ", ".join(cursor.language[:3])
+			genre = ", ".join(cursor.genre[:3])
+
+			pad.safe_print(f"Size: {size} | Length: {simplify_length(cursor.length)} | Language: {language} | Genre: {genre} | Year: {cursor.year}\n")
 
 			if cursor.type == "movie":
 				end = ""
@@ -157,7 +160,8 @@ class InfoPanel(Subwindow):
 				pad.safe_print("\n")
 
 			elif cursor.type == "audio":
-				pad.safe_print(f"Artist: {cursor.artist} | Album: {cursor.album}\n")
+				artist = ", ".join(cursor.artist)
+				pad.safe_print(f"Artist: {artist} | Album: {cursor.album}\n")
 
 		pad.safe_print(f"Path: {cursor.path}")
 
