@@ -1,10 +1,10 @@
 import os
 from math import ceil
+from ..backend import sql
 from curses import A_REVERSE
 from .Point_wsl import Point
 from .colors_wsl import COLOR_DICT
 from . import settings_wsl as settings
-from ..backend.sql import query_file_type, query_file_details
 
 class Marquee:
 	max_strlen = 15
@@ -56,6 +56,16 @@ class Marquee:
 			self.hscroll_index = self.hscroll_delay = 0
 
 		return self.disp_str, self.show_ellipsis
+
+	def toggle_watched(self):
+		try:
+			self.watched
+			self.watched = not self.watched
+		
+		except AttributeError:
+			return
+		
+		sql.change_watched(self.path, self.watched)
 
 	def display(self, parent_list):
 		attr = 0
@@ -156,7 +166,7 @@ class List:
 				to_be_removed.append(item)
 			
 			else:
-				types.append(query_file_type(item))
+				types.append(sql.query_file_type(item))
 
 		for item in to_be_removed:
 			list_1d.remove(item)
@@ -169,7 +179,7 @@ class List:
 			self.list_1d.append(Marquee(item, file_type))
 		
 		for item in self.list_1d:
-			file_details = query_file_details(os.path.abspath(item.name), item.type)
+			file_details = sql.query_file_details(os.path.abspath(item.name), item.type)
 
 			if item.type == "media_dir":
 				item.path, item.size, item.children_count = file_details

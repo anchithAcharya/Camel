@@ -144,7 +144,9 @@ class InfoPanel(Subwindow):
 					end = "\n"
 					
 				if cursor.watched:
-					pad.safe_print(" | ")
+					if end == "\n":
+						pad.safe_print(" | ")
+						
 					pad.safe_print("Movie watched", attr = COLOR_DICT["RED_BLACK"] | curses.A_REVERSE)
 					end = "\n"
 				

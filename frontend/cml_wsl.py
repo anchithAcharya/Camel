@@ -228,6 +228,10 @@ def main(screen, root_path):
 			pad.scroll_pos = min(pad.scroll_pos + (pad.dim.y - 1), max(pad.max_used_space - pad.dim.y, 0))
 			refresh_screen = True
 
+		elif equals(ch, "Toggle watched state"):
+			dir_list.cursor.toggle_watched()
+			info_panel.show_info(dir_list.cursor)
+
 		elif equals(ch, "Select/deselect item under cursor"):
 			if dir_list.cursor not in dir_list.selected_items:
 				if dir_list.cursor.name != "..":

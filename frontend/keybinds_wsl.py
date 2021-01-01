@@ -34,6 +34,7 @@ KEY_VALUES = {
 	'^d' : 4,
 	'^i' : 9,
 	'^o' : 15,
+	'^w' : 23,
 	'Shift+.' : ord('>'),
 
 	'Alt+↑' : 564,
@@ -82,10 +83,12 @@ KEYBINDS.append({
 	"Navigate to first item" : create_keybind("Home"),
 	"Navigate to bottom-most item" : create_keybind("End"),
 
+	"Toggle watched state" : create_keybind("^w"),
 	"Toggle info panel" : create_keybind("^i"),
 
 
 	"Move up by one directory" : create_keybind("Alt+↑"),
+	
 	"Back" : create_keybind("Alt+←"),
 	"Forward" : create_keybind("Alt+→"),
 
@@ -100,6 +103,7 @@ KEYBINDS.append({
 	
 	"Help" : create_keybind("F1"),
 	"Reverse sort order" : create_keybind("F4"),
+	
 	"Quit" : create_keybind("F10")
 })
 
@@ -120,10 +124,12 @@ KEYBINDS.append({
 	"Navigate to first item" : create_keybind("Home", ord('7')),
 	"Navigate to bottom-most item" : create_keybind("End", ord('1')),
 
+	"Toggle watched state" : create_keybind("^w"),
 	"Toggle info panel" : create_keybind("^i"),
 
 
 	"Move up by one directory" : create_keybind("Alt+↑", "/"),
+	
 	"Back" : create_keybind("-", "Alt+←"),
 	"Forward" : create_keybind("+", "Alt+→"),
 
@@ -139,6 +145,7 @@ KEYBINDS.append({
 	
 	"Help" : create_keybind("F1", "Backspace"),
 	"Reverse sort order" : create_keybind("F4"),
+	
 	"Quit" : create_keybind("F10")
 })
 
@@ -159,10 +166,12 @@ KEYBINDS.append({
 	"Navigate to first item" : create_keybind("Home"),
 	"Navigate to bottom-most item" : create_keybind("End"),
 
+	"Toggle watched state" : create_keybind("^w"),
 	"Toggle info panel" : create_keybind("^i"),
 
 
 	"Move up by one directory" : create_keybind("Alt+↑", "/"),
+	
 	"Back" : create_keybind("-", "Alt+←"),
 	"Forward" : create_keybind("+", "Alt+→"),
 
@@ -177,6 +186,7 @@ KEYBINDS.append({
 	
 	"Help" : create_keybind("F1"),
 	"Reverse sort order" : create_keybind("F4"),
+	
 	"Quit" : create_keybind("F10")
 })
 
