@@ -7,14 +7,14 @@ from .Pad_wsl import Pad
 from .List_wsl import List
 from .Point_wsl import Point
 from .Window_wsl import Window
+from ..backend.sql import query
 from .Statusbar_wsl import Statusbar
 from . import settings_wsl as settings
 from . import Help_wsl as help_section
-from ..backend.sql import generate_paths
 from .colors_wsl import COLOR_DICT, init_colors
 from .settings_wsl import KEYBIND_IN_USE as KEYBINDS
 
-def main(screen, root_path):
+def main(screen, root_path, db_path):
 	curses.curs_set(0)
 	init_colors()
 
@@ -36,7 +36,8 @@ def main(screen, root_path):
 	pad.PAD.nodelay(1)
 	pad.PAD.timeout(300)
 
-	dir_list = List(pad, root_path, [])
+	sql = query(db_path)
+	dir_list = List(pad, root_path, sql, [])
 	pad.list = dir_list
 
 	manage_resize = 0		# 0: static screen    1: screen is being resized, wait    2: handle resize
@@ -108,11 +109,11 @@ def main(screen, root_path):
 			if group_open:
 				to_open = dir_list.selected_items or [dir_list.cursor]
 			
-				paths = generate_paths(to_open)
+				paths = sql.generate_paths(to_open)
 				cmd = settings.MEDIA_PLAYER_PATH + ' ' + paths + '  vlc://quit &'
 
 			else:
-				ret = generate_paths([path])
+				ret = sql.generate_paths([path])
 				cmd = f"(cd {ret[0]} && {settings.MEDIA_PLAYER_PATH} {ret[1]}  vlc://quit &)"
 			
 			subprocess.call(cmd, shell = True,
@@ -351,5 +352,5 @@ def main(screen, root_path):
 		
 		if manage_resize != 0: manage_resize = 2
 
-def start(path):
-	curses.wrapper(main, path)
+def start(org_path, db_path):
+	curses.wrapper(main, org_path, db_path)
