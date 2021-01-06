@@ -49,12 +49,14 @@ KEY_VALUES = {
 	'Space' : ord(' '),
 
 	'F1' : curses.KEY_F1,
+	'F3' : curses.KEY_F3,
 	'F4' : curses.KEY_F4,
 	'F10' : curses.KEY_F10,
 }
 
 def create_keybind(*args):
 	temp = []
+
 	for key_repr in args:
 		if key_repr in KEY_VALUES:
 			temp.append((KEY_VALUES[key_repr], key_repr))
@@ -87,8 +89,7 @@ KEYBINDS.append({
 	"Toggle info panel" : create_keybind("^i"),
 
 
-	"Move up by one directory" : create_keybind("Alt+↑"),
-	
+	"Move up by one directory" : create_keybind("Alt+↑"),	
 	"Back" : create_keybind("Alt+←"),
 	"Forward" : create_keybind("Alt+→"),
 
@@ -102,8 +103,9 @@ KEYBINDS.append({
 	"Group open all selected items directly" : create_keybind("^o"),
 	
 	"Help" : create_keybind("F1"),
+	"Search" : create_keybind("F3"),
 	"Reverse sort order" : create_keybind("F4"),
-	
+
 	"Quit" : create_keybind("F10")
 })
 
@@ -128,8 +130,7 @@ KEYBINDS.append({
 	"Toggle info panel" : create_keybind("^i"),
 
 
-	"Move up by one directory" : create_keybind("Alt+↑", "/"),
-	
+	"Move up by one directory" : create_keybind("Alt+↑", "/"),	
 	"Back" : create_keybind("-", "Alt+←"),
 	"Forward" : create_keybind("+", "Alt+→"),
 
@@ -142,10 +143,10 @@ KEYBINDS.append({
 	"Open file/directory under cursor" : create_keybind(ord('0')),
 	"Group open all selected items directly" : create_keybind("Enter"),
 
-	
 	"Help" : create_keybind("F1", "Backspace"),
+	"Search" : create_keybind(ord('2')),
 	"Reverse sort order" : create_keybind("F4"),
-	
+
 	"Quit" : create_keybind("F10")
 })
 
@@ -170,8 +171,7 @@ KEYBINDS.append({
 	"Toggle info panel" : create_keybind("^i"),
 
 
-	"Move up by one directory" : create_keybind("Alt+↑", "/"),
-	
+	"Move up by one directory" : create_keybind("Alt+↑", "/"),	
 	"Back" : create_keybind("-", "Alt+←"),
 	"Forward" : create_keybind("+", "Alt+→"),
 
@@ -185,6 +185,7 @@ KEYBINDS.append({
 	"Group open all selected items directly" : create_keybind("Insert"),
 	
 	"Help" : create_keybind("F1"),
+	"Search" : create_keybind("F3"),
 	"Reverse sort order" : create_keybind("F4"),
 	
 	"Quit" : create_keybind("F10")

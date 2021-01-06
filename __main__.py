@@ -1,7 +1,7 @@
 import os
 from sys import argv
 from .frontend import cml_wsl
-from .backend.__main__ import main
+from .backend.__main__ import main as register_dir
 from .frontend.settings_wsl import ROOT
 
 if "-r" in argv:
@@ -19,7 +19,7 @@ path = argv[1]
 if not os.path.isdir(path):
 	exit(path + " is not a valid directory.")
 
-new_path, db_path = main(path, recalculate)
+new_path, db_path = register_dir(path, recalculate)
 
 os.environ.setdefault('ESCDELAY', '100')
 cml_wsl.start(new_path, db_path)

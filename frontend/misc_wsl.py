@@ -20,6 +20,34 @@ def simplify_length(seconds):
 	
 	return "%02i:%02i:%02i" % (hours, minutes, seconds)
 
+def print_info(pad, info, end_with_newline = True):
+	info = list(info.items())
+	printed = False
+
+	for key, value in info:
+		if value:
+			if printed:
+				pad.safe_print(" | ")
+			
+			if "watched" in str(key):
+				pad.safe_print(str(key), attr = COLOR_DICT["RED_BLACK"] | curses.A_REVERSE)
+				printed = True
+			
+			else:
+				pad.safe_print(str(key), attr = COLOR_DICT["RED_BLACK"])
+
+				if value != " files in folder.":
+					pad.safe_print(': ')
+				
+				elif key == 1:
+					value = " file in folder."
+
+				pad.safe_print(str(value))
+				printed = True
+					
+	if end_with_newline and printed:
+		pad.safe_print("\n")
+
 class Stack_pointer:
 	max_limit = 30
 
@@ -69,34 +97,45 @@ class CWDBar:
 		parent.cwdbar = self
 
 		self.root = root_path
+		self.show = True
 
 		self.handle_resize()
 	
-	def print_cwd(self):
-		cwd = os.path.relpath(os.getcwd(), self.root)
+	def hide(self, hide_CWDbar):
+		if hide_CWDbar:
+			self.show = False
+		
+		else:
+			self.show = True
+		
+		self.handle_resize()
 
-		if cwd.startswith('.'):
-			cwd = cwd.replace('.', '')
-
-		cwd = "~/" + cwd
-
+	def print_cwd(self, show = True):
 		self.CWDBAR.erase()
 
-		for ch in cwd:
-			attr = curses.A_NORMAL
-			
-			if ch == '/' or ch == '~':
-				attr = COLOR_DICT["LRED_BLACK"]
+		if show:
+			cwd = os.path.relpath(os.getcwd(), self.root)
 
-			if ch == '/':
-				ch = ' > '
-			
-			try:
-				self.CWDBAR.addstr(ch, attr)
-			
-			except curses.error:
-				break
-		
+			if cwd.startswith('.'):
+				cwd = cwd.replace('.', '')
+
+			cwd = "~/" + cwd
+
+			for ch in cwd:
+				attr = curses.A_NORMAL
+				
+				if ch == '/' or ch == '~':
+					attr = COLOR_DICT["LRED_BLACK"]
+
+				if ch == '/':
+					ch = ' > '
+				
+				try:
+					self.CWDBAR.addstr(ch, attr)
+				
+				except curses.error:
+					break
+
 		self.CWDBAR.refresh()
 	
 	def handle_resize(self):
@@ -106,7 +145,7 @@ class CWDBar:
 		self.CWDBAR.resize(*self.dim)
 		self.CWDBAR.mvwin(*self.start)
 
-		self.print_cwd()
+		self.print_cwd(self.show)
 
 class InfoPanel(Subwindow):
 	
@@ -128,44 +167,25 @@ class InfoPanel(Subwindow):
 		pad.erase()
 
 		if cursor.type == "media_dir":
-			pad.safe_print(f"Size: {size} | {cursor.children_count} files in folder.\n")
+			print_info(pad, {"Size" : size, cursor.children_count : " files in folder."})
 
 		else:
 			language = ", ".join(cursor.language[:3])
 			genre = ", ".join(cursor.genre[:3])
 
-			pad.safe_print(f"Size: {size} | Length: {simplify_length(cursor.length)} | Language: {language} | Genre: {genre} | Year: {cursor.year}\n")
+			print_info(pad, {"Size" : size, "Length" : simplify_length(cursor.length), "Language" : language, "Genre" : genre, "Year" : cursor.year})
 
 			if cursor.type == "movie":
-				end = ""
-				
-				if cursor.franchise and cursor.installment:
-					pad.safe_print(f"Franchise: {cursor.franchise} | Installment: {cursor.installment}")
-					end = "\n"
-					
-				if cursor.watched:
-					if end == "\n":
-						pad.safe_print(" | ")
-						
-					pad.safe_print("Movie watched", attr = COLOR_DICT["RED_BLACK"] | curses.A_REVERSE)
-					end = "\n"
-				
-				pad.safe_print(end)
+				print_info(pad, {"Franchise" : cursor.franchise, "Installment" : cursor.installment, "Movie watched" : cursor.watched})
 			
 			elif cursor.type == "tv_show":
-				pad.safe_print(f"Show name: {cursor.show_name} | Season: {cursor.season} | Episode: {cursor.episode}")
-				
-				if cursor.watched:
-					pad.safe_print(" | ")
-					pad.safe_print("Episode watched", attr = COLOR_DICT["RED_BLACK"] | curses.A_REVERSE)
-				
-				pad.safe_print("\n")
+				print_info(pad, {"Show name" : cursor.show_name, "Season" : cursor.season, "Episode" : cursor.episode, "Episode watched" : cursor.watched})
 
 			elif cursor.type == "audio":
 				artist = ", ".join(cursor.artist)
-				pad.safe_print(f"Artist: {artist} | Album: {cursor.album}\n")
+				print_info(pad, {"Artist" : artist, "Album" : cursor.album})
 
-		pad.safe_print(f"Path: {cursor.path}")
+			print_info(pad, {"Path" : cursor.path}, False)
 
 		pad.refresh()
 

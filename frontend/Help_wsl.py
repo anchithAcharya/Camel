@@ -5,7 +5,7 @@ from .keybinds_wsl import KEY_VALUES
 from .settings_wsl import KEYBIND_IN_USE as KEYBINDS
 
 VERSION_NO = "7.3.0"
-linebreaks = (4,9,12,15, 19,22,25,28,31,34)
+linebreaks = (4,9,12,15, 21,24,27,30,34)
 
 def process_list(lyst, seperator):
 	lyst = list(lyst)
@@ -36,15 +36,17 @@ section_start = [Point(4,3), Point(4, 3 + (max_key_len[0] + 3 + max_value_len[0]
 SCROLL_LIMIT = Point(len(keys[0]) + 5, 91)
 
 
-def show_help(pad, statusbar, handle_resize):
+def show_help(pad, screen):
+	statusbar = screen.statusbar
+	
 	scroll = Point(0)
 
 	sections = []
 	for i, start in enumerate(section_start):
 		sections.append(pad.subpad(Point(len(keys[i]),(max_key_len[i] + 3 + max_value_len[i])), start))
 
-	refresh_screen = True
-	manage_resize = 0
+	screen.refresh_screen = True
+	screen.manage_resize = 0
 
 	pad.SCROLLBAR.WIN.erase()
 	pad.SCROLLBAR.refresh()
@@ -76,38 +78,38 @@ def show_help(pad, statusbar, handle_resize):
 		return any(ch in keybind for keybind in KEYBINDS[action])
 
 	while 1:
-		if refresh_screen:
+		if screen.refresh_screen:
 			pad.refresh(scroll, refresh_scrollbar = False)
-			refresh_screen = False
+			screen.refresh_screen = False
 
 		ch = pad.PAD.getch()
 
 		if ch == curses.KEY_RESIZE:
-			manage_resize = 1
+			screen.manage_resize = 1
 		
 		elif equals(ch, "Scroll up"):
 			if scroll.y > 0:
 				scroll.y -= 1
 			
-			refresh_screen = True
+			screen.refresh_screen = True
 		
 		elif equals(ch, "Scroll down"):
 			if scroll.y < (SCROLL_LIMIT.y - (pad.dim.y - 1)):
 				scroll.y += 1
 			
-			refresh_screen = True
+			screen.refresh_screen = True
 
 		elif equals(ch, "Scroll left"):
 			if scroll.x > 0:
 				scroll.x = max(scroll.x -2, 0)
 			
-			refresh_screen = True
+			screen.refresh_screen = True
 		
 		elif equals(ch, "Scroll right"):
 			if scroll.x < (SCROLL_LIMIT.x - (pad.dim.x - 1)):
 				scroll.x = min(scroll.x + 2, (SCROLL_LIMIT.x - (pad.dim.x - 1)))
 			
-			refresh_screen = True
+			screen.refresh_screen = True
 
 		elif equals(ch, "Quit"):
 			curses.ungetch(curses.KEY_F10)
@@ -115,16 +117,7 @@ def show_help(pad, statusbar, handle_resize):
 
 		elif ch == KEY_VALUES["Esc"]: break
 	
-		if manage_resize == 2:
-			handle_resize()
-			# print_statusbar(('^PgUp','^PgDn','F10'), extra={'Esc':"Close help"})
-
-			curses.curs_set(1)
-			curses.curs_set(0)
-
-			manage_resize = 0
-			refresh_screen = True
-		
-		if manage_resize != 0: manage_resize = 2
+		screen.refresh_status()
 
 	statusbar.write(('Help', 'Reverse sort order', 'Quit'))
+	screen.cwdbar.hide(False)

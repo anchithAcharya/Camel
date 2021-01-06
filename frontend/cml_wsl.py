@@ -8,6 +8,7 @@ from .List_wsl import List
 from .Point_wsl import Point
 from .Window_wsl import Window
 from ..backend.sql import query
+from .Search_wsl import SearchBar
 from .Statusbar_wsl import Statusbar
 from . import settings_wsl as settings
 from . import Help_wsl as help_section
@@ -26,6 +27,7 @@ def main(screen, root_path, db_path):
 	screen.subs.append(info_panel)
 
 	screen.cwdbar = CWDBar(screen, root_path)
+	screen.searchbar = SearchBar(screen, root_path)
 
 	statusbar = Statusbar(screen, COLOR_DICT["RED_BLACK"])
 	statusbar.write(('Help', 'Reverse sort order', 'Quit'))
@@ -40,17 +42,14 @@ def main(screen, root_path, db_path):
 	dir_list = List(pad, root_path, sql, [])
 	pad.list = dir_list
 
-	manage_resize = 0		# 0: static screen    1: screen is being resized, wait    2: handle resize
 	screen.handle_resize()
-
 
 	qs = ""
 	qs_timeout = -1
-	refresh_screen = False
 	dirHistory = Stack_pointer()
 
 	def set_scroll():
-		nonlocal refresh_screen
+		nonlocal screen
 
 		if dir_list.cursor.index.y not in range(pad.scroll_pos, (pad.scroll_pos + pad.dim.y)):
 			if dir_list.cursor.index.y < pad.dim.y:
@@ -63,7 +62,7 @@ def main(screen, root_path, db_path):
 
 		info_panel.show_info(dir_list.cursor)
 
-		refresh_screen = True
+		screen.refresh_screen = True
 
 	def change_list(path = None, group_open = False, rev = False, add_to_history = True):
 		if rev:
@@ -75,15 +74,31 @@ def main(screen, root_path, db_path):
 		if not path:
 			path = dir_list.cursor.name
 
-		if group_open: file_type = "multiple"
+		if dir_list.cursor:
+			file_type = dir_list.cursor.type
+
 		else:
-			if dir_list.cursor:
-				file_type = dir_list.cursor.type
+			file_type = "media_dir"
+
+		if file_type in ("audio", "movie", "tv_show") or group_open:
+			if group_open:
+				to_open = dir_list.selected_items or [dir_list.cursor]
 			
 			else:
-				file_type = "media_dir"
+				to_open = [path]
+			
+			paths = sql.generate_paths(to_open)
 
-		if file_type in ("dir", "media_dir"):
+			if len(to_open) == 1 and not os.path.isdir(str(to_open[0])):
+				cmd = f"(cd {paths[0]} && {settings.MEDIA_PLAYER_PATH} {paths[1]}  vlc://quit &)"
+
+			else:
+				cmd = settings.MEDIA_PLAYER_PATH + ' ' + paths + '  vlc://quit &'
+
+			subprocess.call(cmd, shell = True,
+							stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+
+		elif file_type == "media_dir":
 			this_dir = os.getcwd()
 
 			os.chdir(path)
@@ -105,20 +120,6 @@ def main(screen, root_path, db_path):
 			
 			set_scroll()
 
-		elif file_type in ("audio", "movie", "tv_show") or group_open:
-			if group_open:
-				to_open = dir_list.selected_items or [dir_list.cursor]
-			
-				paths = sql.generate_paths(to_open)
-				cmd = settings.MEDIA_PLAYER_PATH + ' ' + paths + '  vlc://quit &'
-
-			else:
-				ret = sql.generate_paths([path])
-				cmd = f"(cd {ret[0]} && {settings.MEDIA_PLAYER_PATH} {ret[1]}  vlc://quit &)"
-			
-			subprocess.call(cmd, shell = True,
-							stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
-
 	def equals(ch, action):
 		return any(ch in keybind for keybind in KEYBINDS[action])
 
@@ -126,14 +127,14 @@ def main(screen, root_path, db_path):
 
 	while 1:
 
-		if refresh_screen or (manage_resize == 0 and dir_list.cursor.show_ellipsis):
+		if screen.refresh_screen or (screen.manage_resize == 0 and dir_list.cursor.show_ellipsis):
 			dir_list.display()
-			refresh_screen = False
+			screen.refresh_screen = False
 		
 		ch = pad.PAD.getch()
 
 		if ch == curses.KEY_RESIZE:
-			manage_resize = 1
+			screen.manage_resize = 1
 
 		elif equals(ch, "Navigate up"):
 			index = dir_list.cursor.index
@@ -179,7 +180,7 @@ def main(screen, root_path, db_path):
 			dir_list.cursor = dir_list.list_1d[0]
 			pad.scroll_pos = 0
 
-			refresh_screen = True
+			screen.refresh_screen = True
 
 		elif equals(ch, "Navigate to bottom-most item"):
 			if settings.END_SELECTS_LAST_ITEM:
@@ -195,7 +196,7 @@ def main(screen, root_path, db_path):
 				dir_list.cursor = dir_list.list_1d[0]
 				curses.ungetch(KEYBINDS["Open file/directory under cursor"][0][0])
 			
-			refresh_screen = True
+			screen.refresh_screen = True
 		
 		elif equals(ch, "Back"):
 			path = dirHistory.up()
@@ -213,24 +214,28 @@ def main(screen, root_path, db_path):
 			if pad.scroll_pos > 0:
 				pad.scroll_pos -= 1
 		
-			refresh_screen = True
+			screen.refresh_screen = True
 		
 		elif equals(ch, "Scroll down"):
 			if pad.scroll_pos < (pad.max_used_space - pad.dim.y):
 				pad.scroll_pos += 1
 			
-			refresh_screen = True
+			screen.refresh_screen = True
 
 		elif equals(ch, "Page up"):
 			pad.scroll_pos = max(pad.scroll_pos - (pad.dim.y - 1), 0)
-			refresh_screen = True
+			screen.refresh_screen = True
 		
 		elif equals(ch, "Page down"):
 			pad.scroll_pos = min(pad.scroll_pos + (pad.dim.y - 1), max(pad.max_used_space - pad.dim.y, 0))
-			refresh_screen = True
+			screen.refresh_screen = True
 
 		elif equals(ch, "Toggle watched state"):
-			dir_list.cursor.toggle_watched()
+			to_toggle = dir_list.selected_items or [dir_list.cursor]
+
+			for item in to_toggle:
+				item.toggle_watched()
+			
 			info_panel.show_info(dir_list.cursor)
 
 		elif equals(ch, "Select/deselect item under cursor"):
@@ -243,7 +248,7 @@ def main(screen, root_path, db_path):
 
 			statusbar.update_count(dir_list.selected_items)
 
-			refresh_screen = True
+			screen.refresh_screen = True
 
 		elif equals(ch, "Group select"):
 			if dir_list.selected_items == []: continue
@@ -272,7 +277,7 @@ def main(screen, root_path, db_path):
 			
 			statusbar.update_count(dir_list.selected_items)
 
-			refresh_screen = True
+			screen.refresh_screen = True
 
 		elif equals(ch, "Select all items"):
 			all_items = dir_list.list_1d
@@ -284,7 +289,7 @@ def main(screen, root_path, db_path):
 				dir_list.selected_items = all_items
 				statusbar.update_count(dir_list.selected_items)
 
-				refresh_screen = True
+				screen.refresh_screen = True
 			
 			else: curses.ungetch(KEYBINDS["Deselect all items"][0][0])
 		
@@ -292,14 +297,14 @@ def main(screen, root_path, db_path):
 			dir_list.selected_items = []
 
 			statusbar.update_count(dir_list.selected_items)
-			refresh_screen = True
+			screen.refresh_screen = True
 
 		elif equals(ch, "Toggle info panel"):
 			settings.SHOW_INFO_PANEL = not settings.SHOW_INFO_PANEL
 			screen.handle_resize()
 			set_scroll()
 
-			refresh_screen = True
+			screen.refresh_screen = True
 
 		elif equals(ch, "Group open all selected items directly"):
 			if not (dir_list.selected_items == [] and dir_list.cursor.name == ".."):
@@ -310,11 +315,17 @@ def main(screen, root_path, db_path):
 
 		elif equals(ch, "Help"):
 			settings.SHOW_INFO_PANEL = False
+			screen.cwdbar.hide(True)
 			screen.handle_resize()
 			set_scroll()
 
-			help_section.show_help(pad, screen.statusbar, screen.handle_resize)
-			refresh_screen = True
+			help_section.show_help(pad, screen)
+			screen.refresh_screen = True
+
+		elif equals(ch, "Search"):
+			screen.cwdbar.hide(True)
+			screen.searchbar.search(dir_list)
+			screen.cwdbar.hide(False)
 
 		elif equals(ch, "Reverse sort order"):
 			change_list(rev = True)
@@ -325,7 +336,7 @@ def main(screen, root_path, db_path):
 			qs += chr(ch)
 
 			for file in dir_list.list_1d:
-				if file.name.lower().startswith(qs):
+				if file.name.lower().replace(' ', '').startswith(qs):
 					dir_list.cursor = file
 
 					set_scroll()
@@ -341,16 +352,7 @@ def main(screen, root_path, db_path):
 					qs_timeout = -1
 					qs = ""
 
-		if manage_resize == 2:
-			screen.handle_resize()
-
-			curses.curs_set(1)
-			curses.curs_set(0)
-
-			manage_resize = 0
-			refresh_screen = True
-		
-		if manage_resize != 0: manage_resize = 2
+		screen.refresh_status()
 
 def start(org_path, db_path):
 	curses.wrapper(main, org_path, db_path)

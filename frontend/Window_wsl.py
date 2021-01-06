@@ -13,7 +13,11 @@ class Window: # TODO: add statusbar, include it in resize()
 		self.subs = []
 		self.frame = None
 		self.cwdbar = None
+		self.searchbar = None
 		self.statusbar = None
+
+		self.refresh_screen = False
+		self.manage_resize = 0		# 0: static screen    1: screen is being resized; wait    2: handle resize
 		
 		self.WIN.clear()
 		self.refresh()
@@ -50,6 +54,18 @@ class Window: # TODO: add statusbar, include it in resize()
 		except curses.error:
 			exit("Could not resize window " + self.title)
 
+	def refresh_status(self):
+		if self.manage_resize == 2:
+			self.handle_resize()
+
+			curses.curs_set(1)
+			curses.curs_set(0)
+
+			self.manage_resize = 0
+			self.refresh_screen = True
+		
+		if self.manage_resize != 0: self.manage_resize = 2
+
 	def handle_resize(self):
 		self.dim = Point(self.WIN.getmaxyx())
 
@@ -62,6 +78,7 @@ class Window: # TODO: add statusbar, include it in resize()
 		
 		self.frame.handle_resize()
 		self.cwdbar.handle_resize()
+		self.searchbar.handle_resize()
 		self.statusbar.handle_resize()
 
 		for sub in self.subs:

@@ -1,5 +1,6 @@
 import curses
 from .Point_wsl import Point
+from .colors_wsl import COLOR_DICT
 
 class Scrollwin:
 		SCROLL_CHAR = '█'
@@ -81,11 +82,19 @@ class Pad:
 
 		while 1:
 			try:
-				self.PAD.addstr(*curs_pos, string, attr)
+				limit = len(string) - (self.dim.x - curs_pos.x)
+
+				if limit > 0 and string != "\n":
+					self.PAD.addstr(*curs_pos, string[:-(limit+3)], attr)
+					self.PAD.addstr("...", COLOR_DICT["RED_BLACK"])
+
+				else:
+					self.PAD.addstr(*curs_pos, string, attr)
+
 				break
 
 			except curses.error:
-				self.resize(Point(self.max.y + 20, self.max.x))
+				self.resize(Point(self.max.y + 5, self.max.x))
 
 	def refresh(self, scroll = Point(), offset = None, refresh_scrollbar = True):
 		scroll = scroll.assign_if_none(Point(self.scroll_pos, 0))
