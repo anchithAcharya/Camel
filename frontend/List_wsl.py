@@ -9,19 +9,12 @@ class Marquee:
 	max_strlen = 15
 	ellipsis = "..."
 	
-	def __init__(self, name = "",  file_type = ""):
+	def __init__(self, name, file_type):
 		self.name = name
 		self.type = file_type
 		
 		self.index = Point()
-
-		if len(self.name) <= Marquee.max_strlen:
-			self.disp_str = self.name + ' ' * (Marquee.max_strlen - len(self.name))
-			self.show_ellipsis = False
-
-		else:
-			self.disp_str = self.name[:Marquee.max_strlen - 3]
-			self.show_ellipsis = True
+		self.set_disp_str(self.name)
 
 		self.hscroll_index = 0
 		self.hscroll_delay = 0
@@ -29,9 +22,18 @@ class Marquee:
 	def __repr__(self) -> str:
 		return self.name
 
+	def set_disp_str(self, string):
+		if len(string) <= Marquee.max_strlen:
+			self.disp_str = string + ' ' * (Marquee.max_strlen - len(string))
+			self.show_ellipsis = False
+
+		else:
+			self.disp_str = string[:Marquee.max_strlen - 3]
+			self.show_ellipsis = True
+
 	def set_index(self, index):
 		self.index = index
-	
+
 	def scroll_text(self, cursor, selected_items):
 		if self.show_ellipsis and (cursor == self or self in selected_items):
 			if self.hscroll_index == 0:
@@ -64,7 +66,7 @@ class Marquee:
 		except AttributeError:
 			return
 		
-		List.query.change_watched(self.path, self.watched)
+		List.query.change_watched(self.real_path, self.watched)
 
 	def display(self, parent_list):
 		attr = 0
@@ -153,10 +155,7 @@ class List:
 			for j in i:
 				j.set_index(Point(self.LIST.index(i), i.index(j)))
 
-	def _process_list(self, list_1d, show_hidden_files = False,show_only_media_files = True):
-		if not show_hidden_files:
-			list_1d = [x for x in list_1d if not x.startswith(('.','$'))]
-		
+	def _process_list(self, list_1d):
 		types = []
 		to_be_removed = []
 
@@ -170,21 +169,20 @@ class List:
 		for item in to_be_removed:
 			list_1d.remove(item)
 
-		if os.getcwd() != self.root_path and os.getcwd() != '/':
-			list_1d.insert(0, '..')
-			types.insert(0, 'media_dir')
+		for new_path, file_type in zip(list_1d, types):
+			marquee = Marquee(os.path.basename(new_path), file_type)
+			marquee.path = new_path
 
-		for item, file_type in zip(list_1d, types):
-			self.list_1d.append(Marquee(item, file_type))
+			self.list_1d.append(marquee)
 		
 		for item in self.list_1d:
-			file_details = List.query.file_details(os.path.abspath(item.name), item.type)
+			file_details = List.query.file_details(item.path, item.type)
 
 			if item.type == "media_dir":
-				item.path, item.size, item.children_count = file_details
+				item.real_path, item.size, item.children_count = file_details
 			
 			else:
-				item.path, item.size, item.length, item.year, item.language, item.genre = file_details[:6]
+				item.real_path, item.size, item.length, item.year, item.language, item.genre = file_details[:6]
 
 				if item.type == "movie":
 					item.watched, item.franchise, item.installment = file_details[6:]
@@ -202,20 +200,38 @@ class List:
 		width =  self.max_list_width
 		
 		if rev:
-			self.list_1d = self.list_1d[:1] + self.list_1d[1:][::-1]
+			if self.list_1d[0].name == "..":
+				self.list_1d = self.list_1d[:1] + self.list_1d[1:][::-1]
+			
+			else:
+				self.list_1d = self.list_1d[::-1]
 
 		self.LIST = self._convert_to_2d(self.list_1d, width)
 		self.pad.max_used_space = len(self.LIST)
 
 		self._calculate_indices()
 
-	def change_list(self, new_list1d: list, process_settings = (False,True)):
+	def change_list(self, new_list1d, search = False):
 		if not new_list1d: return
+		
+		cur_dir = os.getcwd()
 
 		self.list_1d.clear()
 		self.selected_items.clear()
 
-		self._process_list(new_list1d, *process_settings)
+		if search or (cur_dir != self.root_path and cur_dir != '/'):
+			parent = Marquee("..", "media_dir")
+
+			if search:
+				parent.set_disp_str("Close search")
+				parent.path = cur_dir
+			
+			else:
+				parent.path = os.path.dirname(cur_dir)
+			
+			self.list_1d.append(parent)
+
+		self._process_list(new_list1d)
 		
 		self.dim = Point(len(self.LIST), len(self.LIST[0]))
 		self._calculate_indices()

@@ -63,7 +63,7 @@ def main(stdscr):
 		return []
 
 	while 1:
-		cmd = myinput(pad, max_YX = (y_max-1,x_max-2), scrollwin = scrollwin, prompt = os.getcwd() + ": ", eval_fn = eval_fn)
+		cmd = myinput(pad, max_YX = (y_max-1,x_max-2), scrollwin = scrollwin, prompt = os.getcwd() + ": ")
 
 		if cmd.startswith('ls'):
 			if cmd == 'ls':
@@ -90,9 +90,9 @@ def main(stdscr):
 
 		else:
 			safe_print(pad, str = "Invalid command: " + cmd + "\n\n")
-			screen.refresh(pad,scrollwin, (y_max-1,x_max-2))
+			screen.refresh()
 
-	pad.refresh()
+	pad.refresh(0,0, 2,2, y_max-1,x_max-2)
 	pad.getkey()
 
 def myinput(win, y = None,x = None, max_YX = None, scrollwin = None, prompt = "", eval_fn = None):
@@ -127,6 +127,7 @@ def myinput(win, y = None,x = None, max_YX = None, scrollwin = None, prompt = ""
 		nonlocal flag,i,inp
 
 		cmd = "".join(inp)
+		arg = ""
 		for it in ('cd','ls'):
 			if cmd.startswith(it + ' '):
 				arg = cmd.replace(it + ' ','')

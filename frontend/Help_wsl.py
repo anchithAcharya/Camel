@@ -36,7 +36,7 @@ section_start = [Point(4,3), Point(4, 3 + (max_key_len[0] + 3 + max_value_len[0]
 SCROLL_LIMIT = Point(len(keys[0]) + 5, 91)
 
 
-def show_help(pad, screen):
+def show_help(pad, screen, dont_touch_cwdbar = False):
 	statusbar = screen.statusbar
 	
 	scroll = Point(0)
@@ -70,6 +70,7 @@ def show_help(pad, screen):
 		pad.safe_print("\nPress Esc key to close this menu.\n\n", COLOR_DICT['LRED_BLACK'], curs_pos = Point(sections[0].start.y + sections[0].dim.y,0))
 
 	
+	if not dont_touch_cwdbar: screen.cwdbar.hide(True)
 	statusbar.write(('Scroll up','Scroll down','Scroll left', 'Scroll right'), extra = [('Esc',"Close help")])
 
 	print_help()
@@ -120,4 +121,10 @@ def show_help(pad, screen):
 		screen.refresh_status()
 
 	statusbar.write(('Help', 'Reverse sort order', 'Quit'))
-	screen.cwdbar.hide(False)
+
+	if screen.searchbar.search_result and screen.searchbar.search_result[0] is True:
+		msg = screen.searchbar.search_result[1]
+		statusbar.safe_print(msg, attr = statusbar.attr | curses.A_REVERSE, curs_pos_x = statusbar.dim.x - len(msg) - 1)
+		statusbar.refresh()
+
+	if not dont_touch_cwdbar: screen.cwdbar.hide(False)

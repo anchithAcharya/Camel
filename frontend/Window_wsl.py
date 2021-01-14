@@ -3,7 +3,7 @@ from .Point_wsl import Point
 from .colors_wsl import COLOR_DICT
 from . import settings_wsl as settings
 
-class Window: # TODO: add statusbar, include it in resize()
+class Window:
 
 	def __init__(self, title, window):
 		self.WIN = window

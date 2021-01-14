@@ -36,17 +36,13 @@ class Statusbar:
 		attr = attr or self.attr
 		curs_pos_x = curs_pos_x or self.STATUSBAR.getyx()[1]
 
-		if attr: self.STATUSBAR.attron(attr)
-
 		try:
 			self.STATUSBAR.addstr(0,curs_pos_x, string, attr)
 
 		except curses.error:
 			return
 		
-		if attr: self.STATUSBAR.attroff(attr)
-
-	def write(self, actions, extra = []):
+	def write(self, actions = [], extra = []):
 		messages = []
 		
 		for action in actions:

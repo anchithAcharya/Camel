@@ -19,6 +19,8 @@ def main(screen, root_path, db_path):
 	curses.curs_set(0)
 	init_colors()
 
+	sql = query(db_path)
+
 	screen = Window("screen", screen)
 
 	screen.frame = frame = screen.subwin(lambda screen, : (screen.dim - Point(8,2), Point(1)), title = "CML")
@@ -27,7 +29,7 @@ def main(screen, root_path, db_path):
 	screen.subs.append(info_panel)
 
 	screen.cwdbar = CWDBar(screen, root_path)
-	screen.searchbar = SearchBar(screen, root_path)
+	screen.searchbar = SearchBar(screen, sql)
 
 	statusbar = Statusbar(screen, COLOR_DICT["RED_BLACK"])
 	statusbar.write(('Help', 'Reverse sort order', 'Quit'))
@@ -38,7 +40,6 @@ def main(screen, root_path, db_path):
 	pad.PAD.nodelay(1)
 	pad.PAD.timeout(300)
 
-	sql = query(db_path)
 	dir_list = List(pad, root_path, sql, [])
 	pad.list = dir_list
 
@@ -46,7 +47,7 @@ def main(screen, root_path, db_path):
 
 	qs = ""
 	qs_timeout = -1
-	dirHistory = Stack_pointer()
+	dirHistory = Stack()
 
 	def set_scroll():
 		nonlocal screen
@@ -72,7 +73,7 @@ def main(screen, root_path, db_path):
 			return
 		
 		if not path:
-			path = dir_list.cursor.name
+			path = dir_list.cursor.path
 
 		if dir_list.cursor:
 			file_type = dir_list.cursor.type
@@ -83,6 +84,7 @@ def main(screen, root_path, db_path):
 		if file_type in ("audio", "movie", "tv_show") or group_open:
 			if group_open:
 				to_open = dir_list.selected_items or [dir_list.cursor]
+				to_open = [x.path for x in to_open]
 			
 			else:
 				to_open = [path]
@@ -99,6 +101,11 @@ def main(screen, root_path, db_path):
 							stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
 
 		elif file_type == "media_dir":
+			if screen.searchbar.search_result and path == dir_list.list_1d[0].path:
+				screen.searchbar.in_search_results = False
+				screen.searchbar.search_result = None
+				screen.cwdbar.hide(False)
+
 			this_dir = os.getcwd()
 
 			os.chdir(path)
@@ -106,7 +113,7 @@ def main(screen, root_path, db_path):
 			if add_to_history:
 				dirHistory.append(os.getcwd())
 
-			dir_list.change_list(os.listdir(), (settings.SHOW_HIDDEN_FILES, settings.SHOW_ONLY_MEDIA_FILES))
+			dir_list.change_list([os.path.abspath(x) for x in os.listdir()])
 
 			if path == '..' and settings.SELECT_PREV_DIR_ON_CD_UP:
 				this_dir = os.path.basename(this_dir)
@@ -311,26 +318,28 @@ def main(screen, root_path, db_path):
 				change_list(group_open = True)
 		
 		elif equals(ch, "Open file/directory under cursor"):
-			change_list(dir_list.cursor.name)
+			change_list(dir_list.cursor.path)
 
 		elif equals(ch, "Help"):
 			settings.SHOW_INFO_PANEL = False
-			screen.cwdbar.hide(True)
 			screen.handle_resize()
 			set_scroll()
 
-			help_section.show_help(pad, screen)
+			help_section.show_help(pad, screen, screen.searchbar.in_search_results)
 			screen.refresh_screen = True
 
 		elif equals(ch, "Search"):
 			screen.cwdbar.hide(True)
-			screen.searchbar.search(dir_list)
-			screen.cwdbar.hide(False)
+
+			if not screen.searchbar.search(dir_list):
+				screen.cwdbar.hide(False)
 
 		elif equals(ch, "Reverse sort order"):
 			change_list(rev = True)
 
-		elif equals(ch, "Quit"): break
+		elif equals(ch, "Quit"):
+			sql.close()
+			break
 
 		elif ch > 0 and chr(ch).isalnum():
 			qs += chr(ch)

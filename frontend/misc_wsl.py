@@ -48,42 +48,50 @@ def print_info(pad, info, end_with_newline = True):
 	if end_with_newline and printed:
 		pad.safe_print("\n")
 
-class Stack_pointer:
-	max_limit = 30
-
-	def __init__(self) -> None:
+class Stack:
+	def __init__(self, init_list = [], rebase = True, limit = 30) -> None:
 		self._stack = []
 		self._pointer = -1
+		self.rebase = rebase
+		self.max_limit = limit
+
+		for item in init_list:
+			self.append(item)
 
 	def append(self, item):
 		if self._stack:
-			if self._pointer != len(self._stack) - 1:
+			if self.rebase and (self._pointer != len(self._stack) - 1):
 				self._stack = self._stack[:self._pointer + 1]
 			
 			if self._stack[-1] == item:
 				return
 
-			if len(self._stack) >= Stack_pointer.max_limit:
+			if len(self._stack) >= self.max_limit:
 				self._stack.pop(0)
 				self._pointer -= 1
 		
 		self._stack.append(item)
 		self._pointer += 1
-	
-	def up(self):
+
+	def up(self, func = lambda: None):
 		if self._pointer > 0:
-			self._pointer -= 1
-		
+			func()
+
+			self._pointer -= 1		
 			return self._stack[self._pointer]
 
-	def down(self):
+	def down(self, func = lambda: None):
 		if self._pointer < len(self._stack) - 1:
-			self._pointer += 1
+			func()
 
+			self._pointer += 1
 			return self._stack[self._pointer]
-	
+
 	def get_cur(self):
 		return self._stack[self._pointer]
+
+	def set_cur(self, value):
+		self._stack[self._pointer] = value
 
 class CWDBar:
 
@@ -119,7 +127,7 @@ class CWDBar:
 			if cwd.startswith('.'):
 				cwd = cwd.replace('.', '')
 
-			cwd = "~/" + cwd
+			cwd = " ~/" + cwd
 
 			for ch in cwd:
 				attr = curses.A_NORMAL
@@ -167,7 +175,11 @@ class InfoPanel(Subwindow):
 		pad.erase()
 
 		if cursor.type == "media_dir":
-			print_info(pad, {"Size" : size, cursor.children_count : " files in folder."})
+			if "Close search" in cursor.disp_str:
+				pad.safe_print("Close the search menu and return to the file tree.")
+
+			else:
+				print_info(pad, {"Size" : size, cursor.children_count : " files in folder."})
 
 		else:
 			language = ", ".join(cursor.language[:3])
@@ -185,7 +197,7 @@ class InfoPanel(Subwindow):
 				artist = ", ".join(cursor.artist)
 				print_info(pad, {"Artist" : artist, "Album" : cursor.album})
 
-			print_info(pad, {"Path" : cursor.path}, False)
+			print_info(pad, {"Path" : cursor.real_path}, False)
 
 		pad.refresh()
 

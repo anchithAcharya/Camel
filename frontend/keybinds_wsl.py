@@ -35,6 +35,7 @@ KEY_VALUES = {
 	'^i' : 9,
 	'^o' : 15,
 	'^w' : 23,
+	'`' : 96,
 	'Shift+.' : ord('>'),
 
 	'Alt+↑' : 564,
@@ -143,7 +144,7 @@ KEYBINDS.append({
 	"Open file/directory under cursor" : create_keybind(ord('0')),
 	"Group open all selected items directly" : create_keybind("Enter"),
 
-	"Help" : create_keybind("F1", "Backspace"),
+	"Help" : create_keybind('`'),
 	"Search" : create_keybind(ord('2')),
 	"Reverse sort order" : create_keybind("F4"),
 
