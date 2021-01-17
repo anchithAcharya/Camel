@@ -147,11 +147,12 @@ class CWDBar:
 		self.CWDBAR.refresh()
 	
 	def handle_resize(self):
-		self.dim = Point(1, self.parent.dim.x)
-		self.start = Point(self.parent.dim.y - 2, 0)
+		if self.show:
+			self.dim = Point(1, self.parent.dim.x)
+			self.start = Point(self.parent.dim.y - 2, 0)
 
-		self.CWDBAR.resize(*self.dim)
-		self.CWDBAR.mvwin(*self.start)
+			self.CWDBAR.resize(*self.dim)
+			self.CWDBAR.mvwin(*self.start)
 
 		self.print_cwd(self.show)
 

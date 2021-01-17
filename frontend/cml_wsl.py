@@ -101,10 +101,11 @@ def main(screen, root_path, db_path):
 							stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
 
 		elif file_type == "media_dir":
-			if screen.searchbar.search_result and path == dir_list.list_1d[0].path:
+			if screen.searchbar.search_result:
 				screen.searchbar.in_search_results = False
 				screen.searchbar.search_result = None
 				screen.cwdbar.hide(False)
+				statusbar.alt_cache = ""
 
 			this_dir = os.getcwd()
 
@@ -123,7 +124,7 @@ def main(screen, root_path, db_path):
 						dir_list.cursor = file
 			
 			screen.cwdbar.print_cwd()
-			statusbar.update_count(dir_list.selected_items)
+			statusbar.update_count(len(dir_list.selected_items))
 			
 			set_scroll()
 
@@ -253,7 +254,7 @@ def main(screen, root_path, db_path):
 			else:
 				dir_list.selected_items.remove(dir_list.cursor)
 
-			statusbar.update_count(dir_list.selected_items)
+			statusbar.update_count(len(dir_list.selected_items))
 
 			screen.refresh_screen = True
 
@@ -282,7 +283,7 @@ def main(screen, root_path, db_path):
 					if file == dir_list.cursor or file == last_selected:
 						break
 			
-			statusbar.update_count(dir_list.selected_items)
+			statusbar.update_count(len(dir_list.selected_items))
 
 			screen.refresh_screen = True
 
@@ -294,7 +295,7 @@ def main(screen, root_path, db_path):
 
 			if not dir_list.selected_items == all_items:
 				dir_list.selected_items = all_items
-				statusbar.update_count(dir_list.selected_items)
+				statusbar.update_count(len(dir_list.selected_items))
 
 				screen.refresh_screen = True
 			
@@ -303,7 +304,7 @@ def main(screen, root_path, db_path):
 		elif equals(ch, "Deselect all items"):
 			dir_list.selected_items = []
 
-			statusbar.update_count(dir_list.selected_items)
+			statusbar.update_count(len(dir_list.selected_items))
 			screen.refresh_screen = True
 
 		elif equals(ch, "Toggle info panel"):
@@ -333,6 +334,8 @@ def main(screen, root_path, db_path):
 
 			if not screen.searchbar.search(dir_list):
 				screen.cwdbar.hide(False)
+
+			screen.handle_resize()
 
 		elif equals(ch, "Reverse sort order"):
 			change_list(rev = True)

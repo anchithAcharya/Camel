@@ -193,6 +193,10 @@ class List:
 				elif item.type == "audio":
 					item.artist, item.album = file_details[6:]
 
+			if item.name != ".." and item.path == self.root_path:
+				item.name = "Root"
+				item.set_disp_str("Root")
+
 		self.LIST = self._convert_to_2d(self.list_1d)
 
 	def reshape_list(self, width = None, rev = False):

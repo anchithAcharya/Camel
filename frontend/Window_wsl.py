@@ -78,11 +78,13 @@ class Window:
 		
 		self.frame.handle_resize()
 		self.cwdbar.handle_resize()
-		self.searchbar.handle_resize()
 		self.statusbar.handle_resize()
+		self.searchbar.handle_resize()
 
 		for sub in self.subs:
 			sub.handle_resize()
+
+		self.refresh_screen = True
 
 
 class Subwindow(Window):

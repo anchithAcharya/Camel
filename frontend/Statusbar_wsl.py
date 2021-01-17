@@ -15,7 +15,7 @@ class Statusbar:
 
 		self.attr = attr
 		self.content = []
-		self.count = 0
+		self.alt_cache = ""
 
 		self.handle_resize()
 	
@@ -25,12 +25,8 @@ class Statusbar:
 	def draw(self):
 		self.erase()
 
-		self.STATUSBAR.attron(self.attr | curses.A_REVERSE)
-
 		for i in range(self.dim.x):
-			self.STATUSBAR.insch(' ')
-
-		self.STATUSBAR.attron(self.attr | curses.A_REVERSE)
+			self.STATUSBAR.insch(' ', self.attr | curses.A_REVERSE)
 
 	def safe_print(self, string, attr = None, curs_pos_x = None):
 		attr = attr or self.attr
@@ -64,24 +60,17 @@ class Statusbar:
 	def refresh(self):
 		self.STATUSBAR.refresh()
 	
-	def update_count(self, selected_items: list):
-		self.count = len(selected_items)
+	def update_count(self, count):
+		string = f" | {count} item{'s' if count > 1 else ''} selected."
+		start = self.dim.x - len(string)
 
-		string = " | {} item".format(self.count)
-		if self.count != 1:
-			string += "s"
-		string += " selected."
-
-		strlen = len(string)
-		start = self.dim.x - strlen
-
-		self.draw()
 		self.write([], extra = self.content)
-		
-		if self.count > 0:
+
+		if count > 0:
+			self.alt_cache = count
 			self.safe_print(string, self.attr | curses.A_REVERSE, start)
 			self.refresh()
-	
+		
 	def handle_resize(self):
 		self.dim = Point(1, self.parent.dim.x)
 		self.start = Point(self.parent.dim.y - 1, 0)
@@ -89,6 +78,12 @@ class Statusbar:
 		self.STATUSBAR.resize(*self.dim)
 		self.STATUSBAR.mvwin(*self.start)
 
-		self.write([], extra = self.content)
-		self.update_count([None] * self.count)
+		self.write(actions = [], extra = self.content)
+		
+		if type(self.alt_cache) is int:
+			self.update_count(self.alt_cache)
+		
+		else:
+			self.safe_print(self.alt_cache, self.attr | curses.A_REVERSE, (self.dim.x - len(self.alt_cache)))
+
 		self.refresh()

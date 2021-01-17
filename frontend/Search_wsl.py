@@ -21,8 +21,10 @@ class SearchBar:
 		self.query = query_obj
 		self.history = Stack(rebase = False)
 
+		self.cache = ""
 		self.search_result = None
 		self.in_search_results = False
+		
 		self.handle_resize()
 	
 	def print(self, string, attr = curses.A_NORMAL, alt_attr = None):
@@ -46,23 +48,28 @@ class SearchBar:
 
 			string = split[1]
 
-		for part in text:
-			if part.startswith("n: "):
-				self.SEARCHBAR.addstr(part[3:], attr)
+		try:
+			for part in text:
+				if part.startswith("n: "):
+					self.SEARCHBAR.addstr(part[3:], attr)
 
-			elif part.startswith("a: "):
-				self.SEARCHBAR.addstr(part[3:], alt_attr)
+				elif part.startswith("a: "):
+					self.SEARCHBAR.addstr(part[3:], alt_attr)
+
+		except curses.error:
+			return
+
+	def _prompt(self):
+		self.print("{ Search:} ", alt_attr = COLOR_DICT["RED_BLACK"] | curses.A_REVERSE)
 
 	def search(self, dir_list):
 		statusbar = self.parent.statusbar
 
-		def print_prompt():
-			self.print("Search:", attr = COLOR_DICT["RED_BLACK"] | curses.A_REVERSE)
-			self.print(' ')
-
 		def print_success(msg):
 			statusbar.safe_print(msg, attr = statusbar.attr | curses.A_REVERSE, curs_pos_x = statusbar.dim.x - len(msg) - 1)
 			statusbar.refresh()
+
+			statusbar.alt_cache = msg
 
 		def print_error(msg):
 			close()
@@ -82,12 +89,11 @@ class SearchBar:
 
 		while 1:
 			self.SEARCHBAR.erase()
-			print_prompt()
+			self._prompt()
 
 			self.print(f"Press any key to start searching.", attr = COLOR_DICT["GRAY_BLACK"])
 			self.SEARCHBAR.refresh()
 
-			statusbar.erase()
 			statusbar.write(extra = [("Esc", "Cancel"), (keybind["Help"][0][1], "See how to use search")])
 
 			if self.search_result:
@@ -98,7 +104,7 @@ class SearchBar:
 					print_error(self.search_result[1])
 					self.search_result = None
 
-			if (query := self._get_input(dir_list, print_prompt)) is False:
+			if (query := self._get_input(dir_list)) is False:
 				if self.in_search_results:
 					close(clear_statusbar = False)
 					return True
@@ -124,6 +130,7 @@ class SearchBar:
 			
 			except (ValueError, SyntaxError, AttributeError, TypeError, FileNotFoundError) as e:
 				self.search_result = (False, e.args[0])
+				statusbar.alt_cache = ""
 
 	def _parse_query(self, query):
 		# keywords = ["in", "type", "path", "ext", "size", "year", "genre", "length", "language", "album", "artist", "watched", "franchise", "installment", "show", "season", "episode"]
@@ -142,12 +149,18 @@ class SearchBar:
 
 		return matches
 
-	def _get_input(self, dir_list, prompt = lambda: None):
+	def _get_input(self, dir_list):
 		localHistory = Stack(self.history._stack + [None], rebase = False)
 		win = self.SEARCHBAR
 		inp_list = []
 		string = ""
 		index = 0
+		first = True
+
+		curses.noecho()
+		win.keypad(1)
+		win.nodelay(1)
+		self.parent.manage_resize = 0
 
 		def handle_history(func):
 			nonlocal index, inp_list, string
@@ -162,27 +175,25 @@ class SearchBar:
 				win.move(0,0)
 				win.clrtoeol()
 
-				prompt()
+				self._prompt()
 				win.addstr(string)
-
-		c = win.getch()
-
-		if c != 27:
-			win.erase()
-			prompt()
-
-			curses.ungetch(c)
-		
-		else:
-			return False
-
-		curses.curs_set(1)
 
 		while 1:
 			c = win.getch()
+			
+			if c == curses.KEY_RESIZE:
+				self.parent.manage_resize = 1
+				self.cache = string
 
-			if c != -1:
+			elif c != -1:
 				y,x = win.getyx()
+
+				if first:
+					first = False
+
+					win.erase()
+					self._prompt()
+					curses.curs_set(1)
 
 				if c == curses.KEY_UP:
 					handle_history(localHistory.up)
@@ -238,7 +249,7 @@ class SearchBar:
 					dir_list.display()
 
 					win.erase()
-					prompt()
+					self._prompt()
 					win.addstr(string)
 
 					curses.curs_set(1)
@@ -257,7 +268,18 @@ class SearchBar:
 
 						string = ''.join(inp_list)
 
-				win.refresh()
+			if self.parent.manage_resize == 2:
+				self.parent.refresh_status()
+
+				win.erase()
+				self._prompt()
+				win.addstr(self.cache)
+
+				curses.curs_set(1)
+			
+			else: self.parent.refresh_status()
+
+			win.refresh()
 
 		if string: self.history.append(string)
 		curses.curs_set(0)
@@ -270,5 +292,3 @@ class SearchBar:
 
 		self.SEARCHBAR.resize(*self.dim)
 		self.SEARCHBAR.mvwin(*self.start)
-
-		# self.search(self.show)
