@@ -3,50 +3,63 @@ from .Point_wsl import Point
 from .colors_wsl import COLOR_DICT
 
 class Scrollwin:
-		SCROLL_CHAR = '█'
+	SCROLL_CHAR = '█'
 
-		def __init__(self, parent):
-			self.WIN = curses.newwin(1,1)
-			self.parent = parent
+	def __init__(self, parent):
+		self.WIN = curses.newwin(1,1)
+		self.parent = parent
 
-			self.WIN.leaveok(1)
+		self.WIN.leaveok(1)
 
-			self.scroll_pos = 0
-			self.dim = Point(0,1)
+		self.scroll_pos = 0
+		self.scroll_len = 1
+		self.dim = Point(0,1)
 
-		def resize(self, new_ylen = None):
-			new_ylen = new_ylen or self.parent.dim.y
+	def resize(self, new_ylen = None):
+		new_ylen = new_ylen or self.parent.dim.y
 
-			try:
-				self.WIN.resize(new_ylen, self.dim.x)
+		try:
+			self.WIN.resize(new_ylen, self.dim.x)
 
-				pos = Point(self.parent.start) + Point(0,self.parent.dim.x)
-				self.WIN.mvwin(*pos)
-			
-			except curses.error:
-				exit("could not resize scrollwin")
-	
-			self.dim.y = new_ylen
-	
-		def update_scroll_pos(self):
-			pad = self.parent
-
-			try:
-				self.scroll_pos = round((pad.scroll_pos/(pad.max_used_space - pad.dim.y)) * (self.dim.y - 1))
-			
-				if self.scroll_pos > self.dim.y:
-					self.scroll_pos = self.dim.y
-
-			except ZeroDivisionError:
-				self.scroll_pos = 0
-
-		def scroll(self):
-			self.WIN.erase()
-			self.WIN.insstr(self.scroll_pos,0, self.SCROLL_CHAR)
-			self.refresh()
+			pos = Point(self.parent.start) + Point(0,self.parent.dim.x)
+			self.WIN.mvwin(*pos)
 		
-		def refresh(self):
-			self.WIN.refresh()
+		except curses.error:
+			exit("could not resize scrollwin")
+
+		self.dim.y = new_ylen
+
+	def update_scroll(self):
+		List = self.parent.list
+
+		try:
+			self.scroll_pos = round(((List.cursor.index.y + 1) / List.dim.y) * (self.dim.y - 1))
+
+			if self.scroll_pos > self.dim.y:
+				self.scroll_pos = self.dim.y
+
+			self.scroll_len = round(self.dim.y / List.dim.y)
+
+			self.scroll_len = max(self.scroll_len, 1)
+			self.scroll_len = min(self.scroll_len, self.dim.y)
+
+		except (ZeroDivisionError, AttributeError):
+			self.scroll_pos = 0
+			self.scroll_len = 1
+
+	def scroll(self):
+		self.WIN.erase()
+
+		scroll_pos_y = self.scroll_pos
+
+		for _ in range(self.scroll_len):
+			self.WIN.insstr(scroll_pos_y,0, self.SCROLL_CHAR)
+			scroll_pos_y -= 1
+
+		self.refresh()
+	
+	def refresh(self):
+		self.WIN.refresh()
 
 class Pad:
 
@@ -77,14 +90,14 @@ class Pad:
 	def erase(self):
 		self.PAD.erase()
 
-	def safe_print(self, string, attr = curses.A_NORMAL, curs_pos = Point(None)):
+	def safe_print(self, string, attr = curses.A_NORMAL, curs_pos = Point(None), ellipses = False):
 		curs_pos = curs_pos.assign_if_none(Point(self.PAD.getyx()))
 
 		while 1:
 			try:
 				limit = len(string) - (self.dim.x - curs_pos.x)
 
-				if limit > 0 and string != "\n":
+				if ellipses and limit > 0 and string != "\n":
 					self.PAD.addstr(*curs_pos, string[:-(limit+3)], attr)
 					self.PAD.addstr("...", COLOR_DICT["RED_BLACK"])
 
@@ -94,7 +107,11 @@ class Pad:
 				break
 
 			except curses.error:
-				self.resize(Point(self.max.y + 5, self.max.x))
+				if ellipses:
+					self.resize(Point(self.max.y + 5, self.max.x))
+
+				else:
+					exit("Error: Window size too small")
 
 	def refresh(self, scroll = Point(), offset = None, refresh_scrollbar = True):
 		scroll = scroll.assign_if_none(Point(self.scroll_pos, 0))
@@ -103,7 +120,7 @@ class Pad:
 		self.PAD.refresh(*scroll, *offset, *(self.dim + (offset - 1)))
 		
 		if self.SCROLLBAR and refresh_scrollbar:
-			self.SCROLLBAR.update_scroll_pos()
+			self.SCROLLBAR.update_scroll()
 			self.SCROLLBAR.scroll()
 			self.SCROLLBAR.refresh()
 
@@ -119,7 +136,11 @@ class Pad:
 			exit("could not resize pad")
 
 	def handle_resize(self):
-		self.dim = self.parent.dim - Point(2,3)
+		self.dim = self.parent.dim - Point(2)
+
+		if self.SCROLLBAR:
+			self.dim -= Point(0,1)
+
 		self.start = self.parent.start + 1
 
 		if self.max.x < self.dim.x:

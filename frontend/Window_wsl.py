@@ -40,8 +40,8 @@ class Window:
 
 		if attr: self.WIN.attroff(attr)
 
-	def subwin(self, constraint, title = ""):
-		return Subwindow(self, constraint, title)
+	def subwin(self, constraint, title = "", main_window = False):
+		return Subwindow(self, constraint, title, main_window)
 
 	def refresh(self):
 		self.WIN.refresh()
@@ -75,21 +75,17 @@ class Window:
 
 		self.WIN.clear()
 		self.refresh()
-		
-		self.frame.handle_resize()
-		self.cwdbar.handle_resize()
-		self.statusbar.handle_resize()
-		self.searchbar.handle_resize()
 
-		for sub in self.subs:
-			sub.handle_resize()
+		for it in [self.frame, self.cwdbar, self.statusbar, self.searchbar] + self.subs:
+			if it:
+				it.handle_resize()
 
 		self.refresh_screen = True
 
 
 class Subwindow(Window):
 	
-	def __init__(self, parent, constraint, title):
+	def __init__(self, parent, constraint, title, main_window = False):
 		dim, start = constraint(parent)
 		
 		try:
@@ -110,6 +106,8 @@ class Subwindow(Window):
 		self.pad = None
 		self.title = title
 
+		self.main_window = main_window
+
 	def decorate(self):
 		self.safe_print(None, "border", attr = COLOR_DICT["RED_BLACK"])
 	
@@ -122,7 +120,7 @@ class Subwindow(Window):
 		if self.pad: self.pad.refresh()
 
 	def handle_resize(self):
-		if self.title == "CML":
+		if self.main_window:
 			if settings.SHOW_INFO_PANEL:
 				self.constraint = lambda screen, : (screen.dim - Point(8,2), Point(1))
 		

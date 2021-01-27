@@ -1,4 +1,3 @@
-import os
 import curses
 
 #git push remote HEAD:master

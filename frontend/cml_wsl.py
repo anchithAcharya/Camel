@@ -9,21 +9,20 @@ from .Point_wsl import Point
 from .Window_wsl import Window
 from ..backend.sql import query
 from .Search_wsl import SearchBar
+from .colors_wsl import COLOR_DICT
 from .Statusbar_wsl import Statusbar
 from . import settings_wsl as settings
 from . import Help_wsl as help_section
-from .colors_wsl import COLOR_DICT, init_colors
 from .settings_wsl import KEYBIND_IN_USE as KEYBINDS
 
 def main(screen, root_path, db_path):
 	curses.curs_set(0)
-	init_colors()
 
 	sql = query(db_path)
 
 	screen = Window("screen", screen)
 
-	screen.frame = frame = screen.subwin(lambda screen, : (screen.dim - Point(8,2), Point(1)), title = "CML")
+	screen.frame = screen.subwin(lambda screen, : (screen.dim - Point(8,2), Point(1)), title = "File Navigator", main_window = True)
 
 	info_panel = InfoPanel(screen, lambda screen : (Point(5,screen.frame.dim.x), screen.frame.start + Point(screen.frame.dim.y, 0)), title = "Details")
 	screen.subs.append(info_panel)
@@ -31,10 +30,10 @@ def main(screen, root_path, db_path):
 	screen.cwdbar = CWDBar(screen, root_path)
 	screen.searchbar = SearchBar(screen, sql)
 
-	statusbar = Statusbar(screen, COLOR_DICT["RED_BLACK"])
-	statusbar.write(('Help', 'Reverse sort order', 'Quit'))
+	statusbar = Statusbar(screen, COLOR_DICT["RED_BLACK"], bg_attr = COLOR_DICT["RED_BLACK"] | curses.A_REVERSE)
+	statusbar.write(('Help', 'Toggle info panel', 'Search', 'Quit'))
 
-	pad = Pad(Point(settings.MIN_DIMS), frame)
+	pad = Pad(Point(settings.MIN_DIMS), screen.frame)
 
 	pad.PAD.keypad(1)
 	pad.PAD.nodelay(1)
@@ -104,8 +103,11 @@ def main(screen, root_path, db_path):
 			if screen.searchbar.search_result:
 				screen.searchbar.in_search_results = False
 				screen.searchbar.search_result = None
+				screen.frame.title = "File Navigator"
 				screen.cwdbar.hide(False)
 				statusbar.alt_cache = ""
+
+				screen.handle_resize()
 
 			this_dir = os.getcwd()
 
@@ -238,6 +240,24 @@ def main(screen, root_path, db_path):
 			pad.scroll_pos = min(pad.scroll_pos + (pad.dim.y - 1), max(pad.max_used_space - pad.dim.y, 0))
 			screen.refresh_screen = True
 
+		elif equals(ch, "Increase marquee length"):
+			dir_list.cursor.change_strlen(increase = True)
+			dir_list.reshape_list()
+
+			for file in dir_list.list_1d:
+				file.set_disp_str(file.name)
+
+			screen.refresh_screen = True
+
+		elif equals(ch, "Decrease marquee length"):
+			dir_list.cursor.change_strlen(increase = False)
+			dir_list.reshape_list()
+
+			for file in dir_list.list_1d:
+				file.set_disp_str(file.name)
+
+			screen.refresh_screen = True
+
 		elif equals(ch, "Toggle watched state"):
 			to_toggle = dir_list.selected_items or [dir_list.cursor]
 
@@ -323,17 +343,23 @@ def main(screen, root_path, db_path):
 
 		elif equals(ch, "Help"):
 			settings.SHOW_INFO_PANEL = False
+			screen.frame.title = "Help section"
 			screen.handle_resize()
 			set_scroll()
 
 			help_section.show_help(pad, screen, screen.searchbar.in_search_results)
-			screen.refresh_screen = True
+
+			screen.frame.title = "File Navigator"
+			screen.handle_resize()
 
 		elif equals(ch, "Search"):
 			screen.cwdbar.hide(True)
 
 			if not screen.searchbar.search(dir_list):
 				screen.cwdbar.hide(False)
+
+			else:
+				screen.frame.title = "Search Results"
 
 			screen.handle_resize()
 

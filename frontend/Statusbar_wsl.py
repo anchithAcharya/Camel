@@ -5,8 +5,10 @@ from .settings_wsl import KEYBIND_IN_USE as KEYBINDS
 
 class Statusbar:
 
-	def __init__(self, parent: Window, attr):
+	def __init__(self, parent: Window, attr = curses.A_NORMAL, bg_attr = curses.A_NORMAL, y_pos = -1):
 		self.STATUSBAR = parent.WIN.subwin(1,1, 0,0)
+
+		self.y_pos = y_pos
 		self.dim = Point(1, parent.dim.x)
 		self.start = Point()
 
@@ -14,6 +16,8 @@ class Statusbar:
 		parent.statusbar = self
 
 		self.attr = attr
+		self.bg_attr = bg_attr
+
 		self.content = []
 		self.alt_cache = ""
 
@@ -22,11 +26,12 @@ class Statusbar:
 	def erase(self):
 		self.STATUSBAR.erase()
 
-	def draw(self):
+	def draw(self, till = None):
 		self.erase()
+		till = till or self.dim.x
 
-		for i in range(self.dim.x):
-			self.STATUSBAR.insch(' ', self.attr | curses.A_REVERSE)
+		for i in range(till):
+			self.STATUSBAR.insch(' ', self.bg_attr)
 
 	def safe_print(self, string, attr = None, curs_pos_x = None):
 		attr = attr or self.attr
@@ -49,11 +54,11 @@ class Statusbar:
 		self.content = messages
 
 		self.draw()
-		self.safe_print('  ', self.attr | curses.A_REVERSE)
+		self.safe_print('  ', self.bg_attr)
 
 		for key, action in messages:
 			self.safe_print(key)
-			self.safe_print(' ' + action + '  ', self.attr | curses.A_REVERSE)
+			self.safe_print(' ' + action + '  ', self.bg_attr)
 		
 		self.refresh()
 	
@@ -68,12 +73,12 @@ class Statusbar:
 
 		if count > 0:
 			self.alt_cache = count
-			self.safe_print(string, self.attr | curses.A_REVERSE, start)
+			self.safe_print(string, self.bg_attr, start)
 			self.refresh()
 		
 	def handle_resize(self):
 		self.dim = Point(1, self.parent.dim.x)
-		self.start = Point(self.parent.dim.y - 1, 0)
+		self.start = Point(self.parent.dim.y + self.y_pos, 0)
 
 		self.STATUSBAR.resize(*self.dim)
 		self.STATUSBAR.mvwin(*self.start)
@@ -84,6 +89,6 @@ class Statusbar:
 			self.update_count(self.alt_cache)
 		
 		else:
-			self.safe_print(self.alt_cache, self.attr | curses.A_REVERSE, (self.dim.x - len(self.alt_cache)))
+			self.safe_print(self.alt_cache, self.bg_attr, (self.dim.x - len(self.alt_cache)))
 
 		self.refresh()

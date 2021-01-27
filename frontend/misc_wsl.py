@@ -27,22 +27,22 @@ def print_info(pad, info, end_with_newline = True):
 	for key, value in info:
 		if value:
 			if printed:
-				pad.safe_print(" | ")
+				pad.safe_print(" | ", ellipses = True)
 			
 			if "watched" in str(key):
-				pad.safe_print(str(key), attr = COLOR_DICT["RED_BLACK"] | curses.A_REVERSE)
+				pad.safe_print(str(key), attr = COLOR_DICT["RED_BLACK"] | curses.A_REVERSE, ellipses = True)
 				printed = True
 			
 			else:
-				pad.safe_print(str(key), attr = COLOR_DICT["RED_BLACK"])
+				pad.safe_print(str(key), attr = COLOR_DICT["RED_BLACK"], ellipses = True)
 
 				if value != " files in folder.":
-					pad.safe_print(': ')
+					pad.safe_print(': ', ellipses = True)
 				
 				elif key == 1:
 					value = " file in folder."
 
-				pad.safe_print(str(value))
+				pad.safe_print(str(value), ellipses = True)
 				printed = True
 					
 	if end_with_newline and printed:
@@ -127,7 +127,7 @@ class CWDBar:
 			if cwd.startswith('.'):
 				cwd = cwd.replace('.', '')
 
-			cwd = " ~/" + cwd
+			cwd = " ROOT /" + cwd
 
 			for ch in cwd:
 				attr = curses.A_NORMAL
@@ -177,7 +177,7 @@ class InfoPanel(Subwindow):
 
 		if cursor.type == "media_dir":
 			if "Close search" in cursor.disp_str:
-				pad.safe_print("Close the search menu and return to the file tree.")
+				pad.safe_print("Close the search menu and return to the file tree.", ellipses = True)
 
 			else:
 				print_info(pad, {"Size" : size, cursor.children_count : " files in folder."})
