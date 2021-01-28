@@ -32,7 +32,7 @@ KEY_VALUES = {
 
 	'^a' : 1,
 	'^d' : 4,
-	'^i' : 9,
+	'Tab' : 9,
 	'^o' : 15,
 	'^w' : 23,
 	'`' : 96,
@@ -53,6 +53,8 @@ KEY_VALUES = {
 	'F3' : curses.KEY_F3,
 	'F4' : curses.KEY_F4,
 	'F10' : curses.KEY_F10,
+	'F11' : curses.KEY_F11,
+	'F12' : curses.KEY_F12
 }
 
 def create_keybind(*args):
@@ -75,10 +77,10 @@ KEYBINDS.append({
 	"Navigate left" : create_keybind("←"),
 	"Navigate right" : create_keybind("→"),
 
-	"Scroll up" : create_keybind("^PgUp"),
-	"Scroll down" : create_keybind("^PgDn"),
-	"Scroll left" : create_keybind("^Home"),
-	"Scroll right" : create_keybind("^End"),
+	"Scroll up" : create_keybind("^↑"),
+	"Scroll down" : create_keybind("^↓"),
+	"Scroll left" : create_keybind("^←"),
+	"Scroll right" : create_keybind("^→"),
 
 	"Page up" : create_keybind("PgUp"),
 	"Page down" : create_keybind("PgDn"),
@@ -86,13 +88,17 @@ KEYBINDS.append({
 	"Navigate to first item" : create_keybind("Home"),
 	"Navigate to bottom-most item" : create_keybind("End"),
 
-	"Toggle watched state" : create_keybind("^w"),
-	"Toggle info panel" : create_keybind("^i"),
+	"Move up by one directory" : create_keybind("Alt+↑"),
 
-
-	"Move up by one directory" : create_keybind("Alt+↑"),	
 	"Back" : create_keybind("Alt+←"),
 	"Forward" : create_keybind("Alt+→"),
+
+
+	"Toggle watched state" : create_keybind("^w"),
+	"Toggle info panel" : create_keybind("Tab"),
+
+	"Decrease marquee length" : create_keybind("F11"),
+	"Increase marquee length" : create_keybind("F12"),
 
 	"Select/deselect item under cursor" : create_keybind(".", "Space"),
 	"Group select" : create_keybind("Shift+."),
@@ -123,21 +129,25 @@ KEYBINDS.append({
 
 	"Page up" : create_keybind(ord('9'), "PgUp"),
 	"Page down" : create_keybind(ord('3'), "PgDn"),
-	
+		
 	"Navigate to first item" : create_keybind("Home", ord('7')),
 	"Navigate to bottom-most item" : create_keybind("End", ord('1')),
 
-	"Toggle watched state" : create_keybind("^w"),
-	"Toggle info panel" : create_keybind("^i"),
-
-
 	"Move up by one directory" : create_keybind("Alt+↑", "/"),	
+
 	"Back" : create_keybind("-", "Alt+←"),
 	"Forward" : create_keybind("+", "Alt+→"),
 
+
+	"Toggle watched state" : create_keybind("^w"),
+	"Toggle info panel" : create_keybind("Tab"),
+
+	"Decrease marquee length" : create_keybind("F11"),
+	"Increase marquee length" : create_keybind("F12"),
+
 	"Select/deselect item under cursor" : create_keybind(".", "Space"),
 	"Group select" : create_keybind("Shift+.", "Del"),
-	
+		
 	"Select all items" : create_keybind("*", "^a"),
 	"Deselect all items" : create_keybind("^d"),
 
@@ -168,13 +178,17 @@ KEYBINDS.append({
 	"Navigate to first item" : create_keybind("Home"),
 	"Navigate to bottom-most item" : create_keybind("End"),
 
-	"Toggle watched state" : create_keybind("^w"),
-	"Toggle info panel" : create_keybind("^i"),
+	"Move up by one directory" : create_keybind("Alt+↑", "/"),
 
-
-	"Move up by one directory" : create_keybind("Alt+↑", "/"),	
 	"Back" : create_keybind("-", "Alt+←"),
 	"Forward" : create_keybind("+", "Alt+→"),
+
+
+	"Toggle watched state" : create_keybind("^w"),
+	"Toggle info panel" : create_keybind("Tab"),
+
+	"Decrease marquee length" : create_keybind("F11"),
+	"Increase marquee length" : create_keybind("F12"),
 
 	"Select/deselect item under cursor" : create_keybind("Del"),
 	"Group select" : create_keybind("Shift+.", "Del"),

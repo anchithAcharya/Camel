@@ -6,7 +6,10 @@ from .colors_wsl import COLOR_DICT
 from . import settings_wsl as settings
 
 class Marquee:
-	max_strlen = 15
+	max_strlen = 30
+	strlen = settings.DEFAULT_MARQUEE_LEN
+	min_strlen = 15
+
 	ellipsis = "..."
 	
 	def __init__(self, name, file_type):
@@ -23,12 +26,12 @@ class Marquee:
 		return self.name
 
 	def set_disp_str(self, string):
-		if len(string) <= Marquee.max_strlen:
-			self.disp_str = string + ' ' * (Marquee.max_strlen - len(string))
+		if len(string) <= Marquee.strlen:
+			self.disp_str = string + ' ' * (Marquee.strlen - len(string))
 			self.show_ellipsis = False
 
 		else:
-			self.disp_str = string[:Marquee.max_strlen - 3]
+			self.disp_str = string[:Marquee.strlen - 3]
 			self.show_ellipsis = True
 
 	def set_index(self, index):
@@ -43,7 +46,7 @@ class Marquee:
 					self.hscroll_delay = 0
 					self.hscroll_index += 1
 
-			elif self.hscroll_index > len(self.name) - (Marquee.max_strlen - 1):
+			elif self.hscroll_index > len(self.name) - (Marquee.strlen - 1):
 				self.hscroll_delay += 1
 
 				if self.hscroll_delay > 3:
@@ -51,12 +54,22 @@ class Marquee:
 			
 			else: self.hscroll_index += 1
 
-			return ' ' + self.name[self.hscroll_index:][:Marquee.max_strlen-2] + ' ', False
+			return ' ' + self.name[self.hscroll_index:][:Marquee.strlen-2] + ' ', False
 		
 		else:
 			self.hscroll_index = self.hscroll_delay = 0
 
 		return self.disp_str, self.show_ellipsis
+
+	def change_strlen(self, increase = True):
+		if increase:
+			new = Marquee.strlen + 1
+
+		else:
+			new = Marquee.strlen - 1
+		
+		if new in range(Marquee.min_strlen, Marquee.max_strlen + 1):
+			Marquee.strlen = new
 
 	def toggle_watched(self):
 		try:
@@ -103,7 +116,7 @@ class List:
 	row_seperator = '\n'
 	column_seperator = ' ' * 3
 	
-	max_strlen = Marquee.max_strlen
+	max_strlen = Marquee.strlen
 
 	def __init__(self, parent, root_path, query_obj, dir_list = []):
 		self.cursor = None
@@ -140,10 +153,18 @@ class List:
 
 		temp = [['' for j in range(x)] for i in range(y)]
 
+		if not settings.UNIX_STYLE_LIST_ORDER:
+			x,y = y,x
+
 		count = 0
 		for i in range(x):
 			for j in range(y):
-				temp[j][i] = list_1d[count]
+				if settings.UNIX_STYLE_LIST_ORDER:
+					temp[j][i] = list_1d[count]
+
+				else:
+					temp[i][j] = list_1d[count]
+
 				count += 1
 
 				if count >= len(list_1d):
@@ -200,6 +221,8 @@ class List:
 		self.LIST = self._convert_to_2d(self.list_1d)
 
 	def reshape_list(self, width = None, rev = False):
+		List.max_strlen = Marquee.strlen
+
 		self.max_list_width = max(int(self.pad.dim.x / (self.max_strlen + len(self.column_seperator))),1)
 		width =  self.max_list_width
 		
@@ -211,6 +234,8 @@ class List:
 				self.list_1d = self.list_1d[::-1]
 
 		self.LIST = self._convert_to_2d(self.list_1d, width)
+		self.dim = Point(len(self.LIST), len(self.LIST[0]))
+
 		self.pad.max_used_space = len(self.LIST)
 
 		self._calculate_indices()

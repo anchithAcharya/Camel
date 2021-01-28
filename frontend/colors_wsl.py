@@ -1,12 +1,13 @@
 import curses
 
 COLOR_DICT = {
-	# (ID, foreground, background)
+	# (ID, foreground, <background>)
 	"RED_BLACK" : (100, curses.COLOR_RED),		# Red and Black, main color scheme
-	"LRED_BLACK" : (101, 9),						# Lighter red and Black, used for ellipses
-	"ORANGE_BLACK" : (104, 202),					# Orange and Black, for audio files
-	"PURPLE_BLACK" : (102, 90),					# Purple and Black, for video files
-	"GRAY_BLACK" : (103, 243)					# Gray and Black, for subtitle/lyric files
+	"LRED_BLACK" : (101, 9),					# Lighter red and Black, used for ellipses
+	"ORANGE_BLACK" : (102, 202),				# Orange and Black, for audio files
+	"PURPLE_BLACK" : (103, 90),					# Purple and Black, for video files
+	"GRAY_BLACK" : (104, 243),					# Gray and Black, for default prompts
+	"GREEN_BLACK" : (105, 76)					# Green and Black, for indicating valid directory in start screen
 }
 
 def init_colors():

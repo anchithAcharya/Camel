@@ -85,7 +85,7 @@ class SearchBar:
 				self.SEARCHBAR.refresh()
 
 			if clear_statusbar:
-				statusbar.write(('Help', 'Reverse sort order', 'Quit'))
+				statusbar.write(('Help', 'Toggle info panel', 'Search', 'Quit'))
 
 		while 1:
 			self.SEARCHBAR.erase()
@@ -133,7 +133,6 @@ class SearchBar:
 				statusbar.alt_cache = ""
 
 	def _parse_query(self, query):
-		# keywords = ["in", "type", "path", "ext", "size", "year", "genre", "length", "language", "album", "artist", "watched", "franchise", "installment", "show", "season", "episode"]
 		parsed = query
 		results = findall("\${(.*?: .*?)}", query)
 
